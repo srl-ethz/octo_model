@@ -1,9 +1,12 @@
 # Octo
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1z0vELj_lX9OWeoMG_WvXnQs43aPOEAhz?usp=sharing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://octo-models.github.io/)
 ![](https://github.com/rail-berkeley/octo/workflows/run-debug/badge.svg)
 ![](https://github.com/rail-berkeley/octo/workflows/pre-commit/badge.svg)
+
+In this fork, a dev container with GPU support for VS Code is included for easier setup, as installing a GPU-supported environment is non-trivial. 
 
 This repo contains code for training and finetuning Octo generalist robotic policies (GRPs).
 Octo models are transformer-based diffusion policies, trained on a diverse mix of 800k robot trajectories.
