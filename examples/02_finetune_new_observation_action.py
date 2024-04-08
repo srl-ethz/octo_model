@@ -33,9 +33,11 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string(
     "pretrained_path", None, "Path to pre-trained Octo checkpoint directory."
 )
-flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
-flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
-flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
+flags.DEFINE_string(
+    "data_dir", None, "Path to finetuning dataset, in RLDS format.")
+flags.DEFINE_string(
+    "save_dir", None, "Directory for saving finetuning checkpoints.")
+flags.DEFINE_integer("batch_size", 32, "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",
@@ -54,7 +56,7 @@ def main(_):
     tf.config.set_visible_devices([], "GPU")
 
     # setup wandb for logging
-    wandb.init(name="finetune_aloha", project="octo")
+    wandb.init("finetune debug", project="octo")
 
     # load pre-trained model
     logging.info("Loading pre-trained model...")
@@ -67,20 +69,21 @@ def main(_):
     logging.info("Loading finetuning dataset...")
     dataset = make_single_dataset(
         dataset_kwargs=dict(
-            name="aloha_sim_cube_scripted_dataset",
+            name="faive_dataset",
             data_dir=FLAGS.data_dir,
-            image_obs_keys={"primary": "top"},
+            image_obs_keys={"primary": "image",
+                            "wrist": "wrist_image"},
             state_obs_keys=["state"],
             language_key="language_instruction",
             action_proprio_normalization_type=NormalizationType.NORMAL,
-            absolute_action_mask=[True] * 14,
+            absolute_action_mask=[True] * 17,
         ),
         traj_transform_kwargs=dict(
             window_size=1,
             future_action_window_size=49,  # so we get 50 actions for our action chunk
         ),
         frame_transform_kwargs=dict(
-            resize_size={"primary": (256, 256)},
+            resize_size={"primary": (256, 256), "wrist": (256, 256)},
         ),
         train=True,
     )
@@ -106,7 +109,7 @@ def main(_):
     # load pre-training config and modify --> remove wrist cam, add proprio input, change action head
     # following Zhao et al. we use "action chunks" of length 50 and L1 loss for ALOHA
     config = pretrained_model.config
-    del config["model"]["observation_tokenizers"]["wrist"]
+    # del config["model"]["observation_tokenizers"]["wrist"]
     ###
     config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
         LowdimObsTokenizer,
@@ -120,7 +123,7 @@ def main(_):
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
         pred_horizon=50,
-        action_dim=14,
+        action_dim=17,
         readout_key="readout_action",
     )
 
@@ -143,7 +146,8 @@ def main(_):
     # create optimizer & train_state, optionally freeze keys for pre-trained transformer
     # train_state bundles parameters & optimizers
     learning_rate = optax.join_schedules(
-        [optax.linear_schedule(0, 3e-5, 100), optax.constant_schedule(3e-5)], [100]
+        [optax.linear_schedule(0, 3e-5, 100),
+         optax.constant_schedule(3e-5)], [100]
     )
     tx = optax.adamw(learning_rate)
     frozen_keys = model.config["optimizer"]["frozen_keys"]
@@ -158,7 +162,8 @@ def main(_):
 
     # define loss function and train step
     def loss_fn(params, batch, rng, train=True):
-        bound_module = model.module.bind({"params": params}, rngs={"dropout": rng})
+        bound_module = model.module.bind(
+            {"params": params}, rngs={"dropout": rng})
         transformer_embeddings = bound_module.octo_transformer(
             batch["observation"],
             batch["task"],
@@ -190,12 +195,14 @@ def main(_):
         if (i + 1) % 100 == 0:
             update_info = jax.device_get(update_info)
             wandb.log(
-                flax.traverse_util.flatten_dict({"training": update_info}, sep="/"),
+                flax.traverse_util.flatten_dict(
+                    {"training": update_info}, sep="/"),
                 step=i,
             )
         if (i + 1) % 1000 == 0:
             # save checkpoint
-            train_state.model.save_pretrained(step=i, checkpoint_path=FLAGS.save_dir)
+            train_state.model.save_pretrained(
+                step=i, checkpoint_path=FLAGS.save_dir)
 
 
 if __name__ == "__main__":
