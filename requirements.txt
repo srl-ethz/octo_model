@@ -30,3 +30,4 @@ opencv-python
 rlds
 tf-agents[reverb]
 mediapy
+pandas==1.3.5
