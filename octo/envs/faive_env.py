@@ -78,26 +78,29 @@ class FaiveGym(gym.Env):
         self.policy_player_agent = policy_player_agent
 
     def step(self, action):
-        print(f'Action: {action}')
         # self.policy_player_agent.publish(
         #     hand_policy=action[6:], wrist_policy=action[:6]
         # )
-        img_obs, qpos = self.policy_player_agent.get_current_observations()
+        obs, gt_action_dict = self.policy_player_agent.get_current_observations()
+
+        if gt_action_dict is not None:
+            loss = np.linalg.norm(action - gt_action_dict["action"])
+            print(f"Action L2 reconstruction loss: {loss}")
 
         truncated = False
 
-        obs = convert_obs(img_obs, qpos, self.im_size)
+        # obs = convert_obs(img_obs, qpos, self.im_size)
 
         return obs, 0, False, truncated, {}
 
     def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
-        self.widowx_client.reset()
-
-        self.is_gripper_closed = False
-        self.num_consecutive_gripper_change_actions = 0
-
-        image_obs, qpos = self.policy_player_agent.get_current_observations()
-        obs = convert_obs(image_obs, qpos, self.im_size)
+        # super().reset(seed=seed)
+        # self.widowx_client.reset()
+        #
+        # self.is_gripper_closed = False
+        # self.num_consecutive_gripper_change_actions = 0
+        #
+        obs, action = self.policy_player_agent.get_current_observations()
+        # obs = convert_obs(image_obs, qpos, self.im_size)
 
         return obs, {}
