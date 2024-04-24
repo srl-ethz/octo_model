@@ -1,5 +1,5 @@
 import time
-
+import os
 import gym
 import numpy as np
 
@@ -44,11 +44,7 @@ class FaiveGym(gym.Env):
     Needed to use Gym wrappers.
     """
 
-    def __init__(
-        self,
-        policy_player_agent,
-        im_size: int = 256,
-    ):
+    def __init__(self, policy_player_agent, im_size: int = 256, log_dir=None):
         self.im_size = im_size
         self.observation_space = gym.spaces.Dict(
             {
@@ -76,6 +72,10 @@ class FaiveGym(gym.Env):
             low=np.ones((17,)) * -1, high=np.ones((17,)), dtype=np.float64
         )
         self.policy_player_agent = policy_player_agent
+        self.log_dir = log_dir
+        self.log_dict = {"pred_actions": [], "gt_actions": []}
+        # avoid name collision when storing logs
+        self.export_counter = 0
 
     def step(self, action):
         # self.policy_player_agent.publish(
@@ -83,7 +83,10 @@ class FaiveGym(gym.Env):
         # )
         obs, gt_action_dict = self.policy_player_agent.get_current_observations()
 
+        self.log_dict["pred_actions"].append(action)
+
         if gt_action_dict is not None:
+            self.log_dict["gt_actions"].append(gt_action_dict["action"])
             loss = np.linalg.norm(action - gt_action_dict["action"])
             print(f"Action L2 reconstruction loss: {loss}")
 
@@ -92,6 +95,13 @@ class FaiveGym(gym.Env):
         # obs = convert_obs(img_obs, qpos, self.im_size)
 
         return obs, 0, False, truncated, {}
+
+    def export_log(self):
+        export_file = os.path.join(self.log_dir, f"log_data_{self.export_counter}.npy")
+        print(f"Exporting env log data to {export_file}!")
+        os.makedirs(os.path.dirname(export_file), exist_ok=True)
+        self.export_counter += 1
+        np.save(export_file, self.log_dict)
 
     def reset(self, seed=None, options=None):
         # super().reset(seed=seed)
@@ -102,5 +112,6 @@ class FaiveGym(gym.Env):
         #
         obs, action = self.policy_player_agent.get_current_observations()
         # obs = convert_obs(image_obs, qpos, self.im_size)
+        self.log_dict = {"pred_actions": [], "gt_actions": []}
 
         return obs, {}
