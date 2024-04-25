@@ -78,9 +78,9 @@ class FaiveGym(gym.Env):
         self.export_counter = 0
 
     def step(self, action):
-        # self.policy_player_agent.publish(
-        #     hand_policy=action[6:], wrist_policy=action[:6]
-        # )
+        self.policy_player_agent.publish(
+            hand_policy=action[6:], wrist_policy=action[:6]
+        )
         obs, gt_action_dict = self.policy_player_agent.get_current_observations()
 
         self.log_dict["pred_actions"].append(action)
@@ -113,5 +113,5 @@ class FaiveGym(gym.Env):
         obs, action = self.policy_player_agent.get_current_observations()
         # obs = convert_obs(image_obs, qpos, self.im_size)
         self.log_dict = {"pred_actions": [], "gt_actions": []}
-
+        print(f'At reset, obs keys: {obs.keys()}')
         return obs, {}
