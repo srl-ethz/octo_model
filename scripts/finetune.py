@@ -34,6 +34,9 @@ from octo.utils.train_utils import (
     TrainState,
 )
 
+from octo.model.components.action_heads import L1ActionHead
+from octo.model.components.tokenizers import LowdimObsTokenizer
+
 try:
     from jax_smi import initialise_tracking  # type: ignore
 
@@ -195,6 +198,45 @@ def main(_):
     #
     #########
 
+    ######################
+
+    config = pretrained_model.config
+    # del config["model"]["observation_tokenizers"]["wrist"]
+    ###
+    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+        LowdimObsTokenizer,
+        n_bins=256,
+        bin_type="normal",
+        low=-2.0,
+        high=2.0,
+        obs_keys=["proprio"],
+    )
+    # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
+    config["model"]["heads"]["action"] = ModuleSpec.create(
+        L1ActionHead,
+        pred_horizon=50,
+        action_dim=17,
+        readout_key="readout_action",
+    )
+
+    # initialize weights for modified Octo model, then merge in all applicable pre-trained weights
+    # new position encodings for proprio inputs & weights for new action head will remain "from scratch"
+
+    # logging.info("Updating model for new observation & action space...")
+    # model = OctoModel.from_config(
+    #     config,
+    #     example_batch,
+    #     text_processor,
+    #     verbose=True,
+    #     dataset_statistics=dataset.dataset_statistics,
+    # )
+    # merged_params = merge_params(model.params, pretrained_model.params)
+    # # can perform any additional parameter surgery here...
+    # # ...
+    # model = model.replace(params=merged_params)
+    # del pretrained_model
+
+    #######################
     rng = jax.random.PRNGKey(FLAGS.config.seed)
     rng, init_rng = jax.random.split(rng)
     model = OctoModel.from_config(
@@ -203,6 +245,7 @@ def main(_):
         text_processor,
         rng=init_rng,
         dataset_statistics=dataset.dataset_statistics,
+        verbose=True,
     )
     merged_params = merge_params(model.params, pretrained_model.params)
     model = model.replace(params=merged_params)

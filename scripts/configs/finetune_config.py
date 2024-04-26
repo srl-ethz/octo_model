@@ -2,7 +2,7 @@ from ml_collections import ConfigDict
 from ml_collections.config_dict import FieldReference, placeholder
 
 
-def get_config(config_string="full,multimodal"):
+def get_config(config_string="full,language_conditioned"):
     mode, task = config_string.split(",")
     assert task in ["image_conditioned", "language_conditioned", "multimodal"]
     assert mode in ["full", "head_only", "head_mlp_only"]
@@ -14,18 +14,20 @@ def get_config(config_string="full,multimodal"):
     # and second image key should be the wrist view (None if not used)
 
     FINETUNING_KWARGS = {
-        "name": "bridge_dataset",
-        "data_dir": "./tests/debug_dataset",
-        "image_obs_keys": {"primary": "image_0", "wrist": None},
+        "name": "faive_dataset",
+        "data_dir": "/home/erbauer/tensorflow_datasets/",
+        "image_obs_keys": {"primary": "image", "wrist": None},
         "state_obs_keys": ["state", None],
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
         # All actions are relative deltas, except for the last one (gripper) which is absolute
         # Specifying this is only necessary if you want to predict > 1 step into the future
-        "absolute_action_mask": [False, False, False, False, False, False, True],
+        # For Faive, 6 relative delta/twist outputs and 11 aboslute hand outputs
+        "absolute_action_mask": [False] * 6 + [True] * 11,
         # standardize_fn is dynamically loaded from a file
         # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
-        "standardize_fn": "octo/data/oxe/oxe_standardization_transforms.py:bridge_dataset_transform",
+        # TODO: check if this is necessary for Faive
+        # "standardize_fn": "octo/data/oxe/oxe_standardization_transforms.py:bridge_dataset_transform",
         # If the default data loading speed is too slow, try these:
         # "num_parallel_reads": 8,  # for reading from disk / GCS
         # "num_parallel_calls": 16,  # for initial dataset construction
@@ -107,7 +109,7 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        future_action_window_size=3,
+        future_action_window_size=49,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -153,9 +155,9 @@ def get_config(config_string="full,multimodal"):
         ],
     )
     # If the default data loading speed is too slow, try these:
-    config[
-        "frame_transform_threads"
-    ] = 16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
+    config["frame_transform_threads"] = (
+        16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
+    )
 
     config["traj_transform_kwargs"] = traj_transform_kwargs
     config["frame_transform_kwargs"] = frame_transform_kwargs
