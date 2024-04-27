@@ -16,8 +16,8 @@ def get_config(config_string="full,language_conditioned"):
     FINETUNING_KWARGS = {
         "name": "faive_dataset",
         "data_dir": "/home/erbauer/tensorflow_datasets/",
-        "image_obs_keys": {"primary": "image", "wrist": None},
-        "state_obs_keys": ["state", None],
+        "image_obs_keys": {"primary": "image"},
+        "state_obs_keys": ["state"],
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
         # All actions are relative deltas, except for the last one (gripper) which is absolute

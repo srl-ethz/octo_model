@@ -175,6 +175,7 @@ def main(_):
         standardize_fn = getattr(imp.load_source("standardize_fn", path), name)
         del FLAGS.config["dataset_kwargs"]["standardize_fn"]
         FLAGS.config["dataset_kwargs"]["standardize_fn"] = standardize_fn
+        print("assigned standardize function!!!\n---------------------------------")
 
     dataset = make_single_dataset(
         FLAGS.config.dataset_kwargs,
@@ -251,6 +252,7 @@ def main(_):
     model = model.replace(params=merged_params)
     del pretrained_model
 
+    print(f'Dataset stats: {dataset.dataset_statistics["proprio"]["mean"].shape}')
     #########
     #
     # Setup Optimizer and Train State
@@ -306,6 +308,7 @@ def main(_):
     example_batch_spec = jax.tree_map(
         lambda arr: (arr.shape, str(arr.dtype)), example_batch
     )
+
     wandb.config.update(
         dict(example_batch_spec=example_batch_spec), allow_val_change=True
     )
