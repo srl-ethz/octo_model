@@ -35,7 +35,8 @@ from octo.utils.train_utils import (
 )
 
 from octo.model.components.action_heads import L1ActionHead
-from octo.model.components.tokenizers import LowdimObsTokenizer
+from octo.model.components.tokenizers import LowdimObsTokenizer, ImageTokenizer
+from octo.model.components.vit_encoders import SmallStem16
 
 try:
     from jax_smi import initialise_tracking  # type: ignore
@@ -212,6 +213,14 @@ def main(_):
         high=2.0,
         obs_keys=["proprio"],
     )
+
+    config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
+        ImageTokenizer,
+        obs_stack_keys=["image_top"],
+        task_stack_keys=["image_top"],
+        encoder=ModuleSpec.create(SmallStem16),
+    )
+
     # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
