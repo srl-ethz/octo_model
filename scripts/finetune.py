@@ -34,6 +34,10 @@ from octo.utils.train_utils import (
     TrainState,
 )
 
+from octo.model.components.action_heads import L1ActionHead
+from octo.model.components.tokenizers import LowdimObsTokenizer, ImageTokenizer
+from octo.model.components.vit_encoders import SmallStem16
+
 try:
     from jax_smi import initialise_tracking  # type: ignore
 
@@ -172,6 +176,7 @@ def main(_):
         standardize_fn = getattr(imp.load_source("standardize_fn", path), name)
         del FLAGS.config["dataset_kwargs"]["standardize_fn"]
         FLAGS.config["dataset_kwargs"]["standardize_fn"] = standardize_fn
+        print("assigned standardize function!!!\n---------------------------------")
 
     dataset = make_single_dataset(
         FLAGS.config.dataset_kwargs,
@@ -195,6 +200,53 @@ def main(_):
     #
     #########
 
+    ######################
+
+    config = pretrained_model.config
+    # del config["model"]["observation_tokenizers"]["wrist"]
+    ###
+    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+        LowdimObsTokenizer,
+        n_bins=256,
+        bin_type="normal",
+        low=-2.0,
+        high=2.0,
+        obs_keys=["proprio"],
+    )
+
+    config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
+        ImageTokenizer,
+        obs_stack_keys=["image_top"],
+        task_stack_keys=["image_top"],
+        encoder=ModuleSpec.create(SmallStem16),
+    )
+
+    # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
+    config["model"]["heads"]["action"] = ModuleSpec.create(
+        L1ActionHead,
+        pred_horizon=50,
+        action_dim=17,
+        readout_key="readout_action",
+    )
+
+    # initialize weights for modified Octo model, then merge in all applicable pre-trained weights
+    # new position encodings for proprio inputs & weights for new action head will remain "from scratch"
+
+    # logging.info("Updating model for new observation & action space...")
+    # model = OctoModel.from_config(
+    #     config,
+    #     example_batch,
+    #     text_processor,
+    #     verbose=True,
+    #     dataset_statistics=dataset.dataset_statistics,
+    # )
+    # merged_params = merge_params(model.params, pretrained_model.params)
+    # # can perform any additional parameter surgery here...
+    # # ...
+    # model = model.replace(params=merged_params)
+    # del pretrained_model
+
+    #######################
     rng = jax.random.PRNGKey(FLAGS.config.seed)
     rng, init_rng = jax.random.split(rng)
     model = OctoModel.from_config(
@@ -203,11 +255,13 @@ def main(_):
         text_processor,
         rng=init_rng,
         dataset_statistics=dataset.dataset_statistics,
+        verbose=True,
     )
     merged_params = merge_params(model.params, pretrained_model.params)
     model = model.replace(params=merged_params)
     del pretrained_model
 
+    print(f'Dataset stats: {dataset.dataset_statistics["proprio"]["mean"].shape}')
     #########
     #
     # Setup Optimizer and Train State
@@ -263,6 +317,7 @@ def main(_):
     example_batch_spec = jax.tree_map(
         lambda arr: (arr.shape, str(arr.dtype)), example_batch
     )
+
     wandb.config.update(
         dict(example_batch_spec=example_batch_spec), allow_val_change=True
     )

@@ -302,10 +302,12 @@ class VisualizationCallback(Callback):
                     metrics = visualizer.metrics_for_wandb(raw_infos)
                     wandb_metrics[f"offline_metrics_{name}/{mode}"] = metrics
                 if self.trajs_for_viz > 0:
-                    images = visualizer.visualize_for_wandb(
-                        policy_fn, max_trajs=self.trajs_for_viz
-                    )
-                    wandb_metrics[f"visualizations_{name}/{mode}"] = images
+                    pass
+                    # TODO: commented out because the viz is hardcoded
+                    # images = visualizer.visualize_for_wandb(
+                    #     policy_fn, max_trajs=self.trajs_for_viz
+                    # )
+                    # wandb_metrics[f"visualizations_{name}/{mode}"] = images
         return wandb_metrics
 
 
