@@ -34,7 +34,7 @@ from octo.utils.train_utils import (
     TrainState,
 )
 
-from octo.model.components.action_heads import L1ActionHead
+from octo.model.components.action_heads import DiffusionActionHead, L1ActionHead
 from octo.model.components.tokenizers import LowdimObsTokenizer, ImageTokenizer
 from octo.model.components.vit_encoders import SmallStem16
 
@@ -207,10 +207,11 @@ def main(_):
     ###
     config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
         LowdimObsTokenizer,
+        discretize=False,
         n_bins=256,
-        bin_type="normal",
-        low=-2.0,
-        high=2.0,
+        # bin_type="normal",
+        # low=-2.0,
+        # high=2.0,
         obs_keys=["proprio"],
     )
 
@@ -228,6 +229,14 @@ def main(_):
         action_dim=17,
         readout_key="readout_action",
     )
+
+    # config["model"]["heads"]["action"] = ModuleSpec.create(
+    #     DiffusionActionHead,
+    #     use_map=False,
+    #     pred_horizon=20,
+    #     action_dim=17,
+    #     readout_key="readout_action",
+    # )
 
     # initialize weights for modified Octo model, then merge in all applicable pre-trained weights
     # new position encodings for proprio inputs & weights for new action head will remain "from scratch"
