@@ -9,6 +9,17 @@ import matplotlib.pyplot as plt
 from glob import glob
 import os
 
+wrist_axis_names = [
+    "twist.linear.x",
+    "twist.linear.y",
+    "twist.linear.z",
+    "twist.angular.x",
+    "twist.angular.y",
+    "twist.angular.z",
+]
+gripper_axis_names = [f"gripper.angle.{i}" for i in range(11)]
+axis_names = wrist_axis_names + gripper_axis_names
+
 
 def find_files(root_dir):
     numpy_file = glob(os.path.join(root_dir, "*.npy"))[0]
@@ -31,7 +42,7 @@ def plot_axes(data, axes, save_dir):
         plt.figure(figsize=(8, 6))
         plt.plot(pred_actions[:, axis_id], label="Predicted", color="blue")
         plt.plot(gt_actions[:, axis_id], label="Ground Truth", color="red")
-        plt.title(f"Axis ID: {axis_id}")
+        plt.title(f"Axis: {axis_names[axis_id]}")
         plt.xlabel("Time")
         plt.ylabel("Value")
         plt.legend()
