@@ -4,38 +4,39 @@ import gym
 import numpy as np
 
 
-def convert_obs(image_obs, qpos, im_size):
-    """
-    Image obs: (N, C, H, W)
-    qpos: (17,)
-
-    Convert observations to format usable by model.
-    """
-    transformed_image_obs = []
-    for i, im in enumerate(image_obs):
-        transformed_image_obs[i] = (
-            im.reshape(3, im_size, im_size).transpose(1, 2, 0) * 255
-        ).astype(np.uint8)
-
-    # add padding to proprio to match training
-    # proprio = np.concatenate([obs["state"][:6], [0], obs["state"][-1:]])
-    proprio = qpos
-    # NOTE: assume image_1 is not available
-    return {
-        "image_primary": transformed_image_obs[0],
-        "image_top": transformed_image_obs[1],
-        "image_wrist": transformed_image_obs[2],
-        "proprio": proprio,
-    }
-
-
-def null_obs(img_size):
-    return {
-        "image_primary": np.zeros((img_size, img_size, 3), dtype=np.uint8),
-        "image_top": np.zeros((img_size, img_size, 3), dtype=np.uint8),
-        "image_wrist": np.zeros((img_size, img_size, 3), dtype=np.uint8),
-        "proprio": np.zeros((8,), dtype=np.float64),
-    }
+# def convert_obs(image_obs, qpos, im_size):
+#     """
+#     Image obs: (N, C, H, W)
+#     qpos: (17,)
+#
+#     Convert observations to format usable by model.
+#     """
+#     transformed_image_obs = []
+#     for i, im in enumerate(image_obs):
+#         transformed_image_obs[i] = (
+#             im.reshape(3, im_size, im_size).transpose(1, 2, 0) * 255
+#         ).astype(np.uint8)
+#
+#     # add padding to proprio to match training
+#     # proprio = np.concatenate([obs["state"][:6], [0], obs["state"][-1:]])
+#     proprio = qpos
+#     # NOTE: assume image_1 is not available
+#     return {
+#         "image_primary": transformed_image_obs[0],
+#         "image_top": transformed_image_obs[1],
+#         "image_wrist": transformed_image_obs[2],
+#         "proprio": proprio,
+#     }
+#
+#
+# def null_obs(img_size):
+#     return {
+#         "image_primary": np.zeros((img_size, img_size, 3), dtype=np.uint8),
+#         "image_top": np.zeros((img_size, img_size, 3), dtype=np.uint8),
+#         "image_wrist": np.zeros((img_size, img_size, 3), dtype=np.uint8),
+#         "proprio": np.zeros((8,), dtype=np.float64),
+#     }
+#
 
 
 class FaiveGym(gym.Env):
