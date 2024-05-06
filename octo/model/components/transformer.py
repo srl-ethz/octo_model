@@ -238,7 +238,7 @@ def common_transformer_sizes(transformer_size: str) -> (int, dict):
             transformer_kwargs (dict): The kwargs to pass to the transformer
 
     """
-    assert transformer_size in ["dummy", "vanilla", "vit_s", "vit_b", "vit_l", "vit_h"]
+    assert transformer_size in ["dummy", "vanilla", "vit_s", "vit_b", "vit_l", "vit_h"], f"Transformer size {transformer_size} not recognized."
     default_params = {
         "attention_dropout_rate": 0.0,
         "add_position_embedding": False,

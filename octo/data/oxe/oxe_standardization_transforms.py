@@ -80,9 +80,9 @@ def kuka_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
         compression_type="ZLIB",
     )
     eef_value = tf.io.decode_raw(eef_value, tf.float32)
-    trajectory["observation"][
-        "clip_function_input/base_pose_tool_reached"
-    ] = tf.reshape(eef_value, (-1, 7))
+    trajectory["observation"]["clip_function_input/base_pose_tool_reached"] = (
+        tf.reshape(eef_value, (-1, 7))
+    )
     gripper_value = tf.io.decode_compressed(
         trajectory["observation"]["gripper_closed"], compression_type="ZLIB"
     )
@@ -145,7 +145,7 @@ def jaco_play_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def berkeley_cable_routing_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["action"] = tf.concat(
         (
@@ -221,7 +221,7 @@ def viola_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def berkeley_autolab_ur5_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["observation"]["state"] = trajectory["observation"]["robot_state"][
         :, 6:14
@@ -303,7 +303,7 @@ def pusht_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def stanford_kuka_multimodal_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["observation"]["depth_image"] = trajectory["observation"]["depth_image"][
         ..., 0
@@ -430,7 +430,7 @@ def furniture_bench_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, A
 
 
 def cmu_franka_exploration_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["action"] = trajectory["action"][..., :-1]
     return trajectory
@@ -512,7 +512,7 @@ def bc_z_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def tokyo_pr2_opening_fridge_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["observation"]["eef_state"] = trajectory["observation"]["state"][:, :6]
     trajectory["observation"]["gripper_state"] = trajectory["observation"]["state"][
@@ -523,7 +523,7 @@ def tokyo_pr2_opening_fridge_dataset_transform(
 
 
 def tokyo_pr2_tabletop_manipulation_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["observation"]["eef_state"] = trajectory["observation"]["state"][:, :6]
     trajectory["observation"]["gripper_state"] = trajectory["observation"]["state"][
@@ -534,13 +534,13 @@ def tokyo_pr2_tabletop_manipulation_dataset_transform(
 
 
 def utokyo_xarm_pick_place_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     return trajectory
 
 
 def utokyo_xarm_bimanual_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["action"] = trajectory["action"][..., -7:]
     return trajectory
@@ -577,7 +577,7 @@ def berkeley_rpt_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]
 
 
 def kaist_nonprehensible_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     trajectory["observation"]["state"] = trajectory["observation"]["state"][:, -7:]
     trajectory["action"] = tf.concat(
@@ -630,7 +630,7 @@ def dlr_sara_grid_clamp_dataset_transform(trajectory: Dict[str, Any]) -> Dict[st
 
 
 def dlr_edan_shared_control_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     # invert gripper action, +1 = open, 0 = close
     trajectory["action"] = tf.concat(
@@ -732,7 +732,7 @@ def berkeley_fanuc_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, An
 
 
 def cmu_playing_with_food_dataset_transform(
-    trajectory: Dict[str, Any]
+    trajectory: Dict[str, Any],
 ) -> Dict[str, Any]:
     import tensorflow_graphics.geometry.transformation as tft
 
@@ -794,6 +794,13 @@ def gnm_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     return trajectory
 
 
+def faive_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    This is NOT used for pretraining, but rather for training from scratch on our Faive data.
+    """
+    return trajectory
+
+
 OXE_STANDARDIZATION_TRANSFORMS = {
     "bridge_dataset": bridge_dataset_transform,
     "fractal20220817_data": rt1_dataset_transform,
@@ -847,4 +854,5 @@ OXE_STANDARDIZATION_TRANSFORMS = {
     "berkeley_gnm_recon": gnm_dataset_transform,
     "berkeley_gnm_cory_hall": gnm_dataset_transform,
     "berkeley_gnm_sac_son": gnm_dataset_transform,
+    "faive_dataset": faive_dataset_transform,
 }

@@ -3,6 +3,8 @@ from functools import partial
 import imp
 import os
 
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+
 from absl import app, flags, logging
 import flax
 from flax.traverse_util import flatten_dict
@@ -205,15 +207,15 @@ def main(_):
     config = pretrained_model.config
     # del config["model"]["observation_tokenizers"]["wrist"]
     ###
-    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
-        LowdimObsTokenizer,
-        discretize=False,
-        n_bins=256,
-        # bin_type="normal",
-        # low=-2.0,
-        # high=2.0,
-        obs_keys=["proprio"],
-    )
+    # config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+    #     LowdimObsTokenizer,
+    #     discretize=False,
+    #     n_bins=256,
+    #     # bin_type="normal",
+    #     # low=-2.0,
+    #     # high=2.0,
+    #     obs_keys=["proprio"],
+    # )
 
     config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
         ImageTokenizer,
