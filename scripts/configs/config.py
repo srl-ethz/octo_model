@@ -82,12 +82,12 @@ def get_config(
             viz_interval=20000,
             save_interval=10000,
             val_kwargs=dict(
-                val_shuffle_buffer_size=1000,
-                num_val_batches=16,
+                val_shuffle_buffer_size=500,
+                num_val_batches=8,
             ),
             viz_kwargs=dict(
-                eval_batch_size=128,
-                trajs_for_metrics=100,
+                eval_batch_size=64,
+                trajs_for_metrics=10,
                 trajs_for_viz=8,
                 samples_per_state=8,
             ),
@@ -153,11 +153,11 @@ def get_dataset_config(window_size=1):
                     "random_hue",
                 ],
             ),
-            num_parallel_calls=200,
+            num_parallel_calls=64,
         ),
-        "traj_transform_threads": 48,  # shared between all datasets
-        "traj_read_threads": 48,  # shared between all datasets
-        "shuffle_buffer_size": 100000,  # shared between all datasets
-        "batch_size": 1024,
+        "traj_transform_threads": 12,  # shared between all datasets
+        "traj_read_threads": 12,  # shared between all datasets
+        "shuffle_buffer_size": 500,  # shared between all datasets
+        "batch_size": 128,
         "balance_weights": True,
     }

@@ -82,6 +82,7 @@ def make_oxe_dataset_kwargs(
     del dataset_kwargs["action_encoding"]
 
     dataset_kwargs["standardize_fn"] = OXE_STANDARDIZATION_TRANSFORMS[name]
+    # dataset_kwargs["standardize_fn"] = OXE_STANDARDIZATION_TRANSFORMS[name]
 
     return {"name": name, "data_dir": data_dir, **dataset_kwargs}
 

@@ -54,7 +54,7 @@ def get_config(config_string="full,language_conditioned"):
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=256,
+        batch_size=128,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
@@ -84,8 +84,8 @@ def get_config(config_string="full,language_conditioned"):
             grad_accumulation_steps=None,  # if you are using grad accumulation, you need to adjust max_steps accordingly
         ),
         val_kwargs=dict(
-            val_shuffle_buffer_size=1000,
-            num_val_batches=16,
+            val_shuffle_buffer_size=100,
+            num_val_batches=8,
         ),
         viz_kwargs=dict(
             eval_batch_size=128,

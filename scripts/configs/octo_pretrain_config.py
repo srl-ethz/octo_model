@@ -33,6 +33,7 @@ def get_config(config_string=None):
     config["window_size"] = 1
     # config["num_steps"] = 300000
     config["num_steps"] = 50000
+    config["shuffle_buffer_size"] = 500
     config["model"]["observation_tokenizers"] = {
         "primary": ModuleSpec.create(
             ImageTokenizer,
@@ -113,6 +114,8 @@ def get_config(config_string=None):
         # wrist_augment_kwargs,
     ]
 
+    config["frame_transform_threads"] = 8
+
     config = update_config(
         config,
         optimizer=dict(
@@ -127,11 +130,11 @@ def get_config(config_string=None):
                 load_proprio=False,
             ),
             traj_transform_kwargs=dict(
-                future_action_window_size=50,
+                future_action_window_size=49,
             ),
             batch_size=128,
-            shuffle_buffer_size=5000,
-            balance_weights=True,
+            shuffle_buffer_size=500,
+            balance_weights=False,
         ),
         # {
         #     "name": "faive_dataset",
