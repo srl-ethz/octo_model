@@ -42,7 +42,7 @@ class ActionEncoding(IntEnum):
 
 OXE_DATASET_CONFIGS = {
     "faive_dataset": {
-        "image_obs_keys": {"primary": "image", "secondary": "top_image", "wrist": None},
+        "image_obs_keys": {"primary": "image", "secondary": "top_image", "wrist": "wrist_image"},
         "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
         "state_obs_keys": ["state"],
         "state_encoding": StateEncoding.POS_MIMIC,

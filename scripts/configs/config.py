@@ -45,7 +45,7 @@ def get_model_config(transformer_size):
         readouts=dict(),
         token_embedding_size=token_embedding_size,
         transformer_kwargs=transformer_kwargs,
-        max_horizon=50,
+        max_horizon=20,
     )
 
 
@@ -155,9 +155,9 @@ def get_dataset_config(window_size=1):
             ),
             num_parallel_calls=64,
         ),
-        "traj_transform_threads": 12,  # shared between all datasets
-        "traj_read_threads": 12,  # shared between all datasets
-        "shuffle_buffer_size": 500,  # shared between all datasets
+        "traj_transform_threads": 1,  # shared between all datasets
+        "traj_read_threads": 1,  # shared between all datasets
+        "shuffle_buffer_size": 1000,  # shared between all datasets
         "batch_size": 128,
         "balance_weights": True,
     }

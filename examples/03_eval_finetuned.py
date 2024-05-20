@@ -15,6 +15,7 @@ To run this script, run:
     cd examples
     python3 03_eval_finetuned.py --finetuned_path=<path_to_finetuned_aloha_checkpoint>
 """
+
 import sys
 
 from absl import app, flags, logging
@@ -23,7 +24,7 @@ import jax
 import numpy as np
 import wandb
 
-sys.path.append("path/to/your/act")
+sys.path.append("/home/erbauer/act/")
 
 from envs.aloha_sim_env import AlohaGymEnv  # keep this to register ALOHA sim env
 

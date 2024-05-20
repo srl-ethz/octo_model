@@ -205,7 +205,7 @@ def main(_):
     ######################
 
     config = pretrained_model.config
-    # del config["model"]["observation_tokenizers"]["wrist"]
+    del config["model"]["observation_tokenizers"]["wrist"]
     ###
     # config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
     #     LowdimObsTokenizer,
@@ -217,19 +217,20 @@ def main(_):
     #     obs_keys=["proprio"],
     # )
 
-    config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
-        ImageTokenizer,
-        obs_stack_keys=["image_top"],
-        task_stack_keys=["image_top"],
-        encoder=ModuleSpec.create(SmallStem16),
-    )
+    # config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
+    #     ImageTokenizer,
+    #     obs_stack_keys=["image_top"],
+    #     task_stack_keys=["image_top"],
+    #     encoder=ModuleSpec.create(SmallStem16),
+    # )
 
     # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
-        pred_horizon=50,
+        pred_horizon=10,
         action_dim=17,
         readout_key="readout_action",
+        max_action=120.0,
     )
 
     # config["model"]["heads"]["action"] = ModuleSpec.create(
