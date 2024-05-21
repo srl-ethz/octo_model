@@ -45,7 +45,7 @@ def get_model_config(transformer_size):
         readouts=dict(),
         token_embedding_size=token_embedding_size,
         transformer_kwargs=transformer_kwargs,
-        max_horizon=10,
+        max_horizon=20,
     )
 
 
@@ -82,12 +82,12 @@ def get_config(
             viz_interval=20000,
             save_interval=10000,
             val_kwargs=dict(
-                val_shuffle_buffer_size=1000,
-                num_val_batches=16,
+                val_shuffle_buffer_size=500,
+                num_val_batches=8,
             ),
             viz_kwargs=dict(
-                eval_batch_size=128,
-                trajs_for_metrics=100,
+                eval_batch_size=64,
+                trajs_for_metrics=10,
                 trajs_for_viz=8,
                 samples_per_state=8,
             ),
@@ -95,17 +95,21 @@ def get_config(
             text_processor=ModuleSpec.create(MuseEmbedding),
             pretrained_loaders=tuple(),
             wandb=dict(
-                project="octo",
-                group=placeholder(str),
-                entity=placeholder(str),
+                project="octo_finetune",
+                group="octo_train",
+                job_type="train",
+                tags=[
+                    "train",
+                ],
+                entity="srl_ethz",
             ),
             wandb_resume_id=placeholder(str),
-            eval_datasets=(
-                "bridge_dataset",
-                "taco_play",
-                "berkeley_cable_routing",
-                "berkeley_autolab_ur5",
-            ),
+            # eval_datasets=(
+            #     "bridge_dataset",
+            #     "taco_play",
+            #     "berkeley_cable_routing",
+            #     "berkeley_autolab_ur5",
+            # ),
         )
     )
 
@@ -120,12 +124,12 @@ def get_dataset_config(window_size=1):
 
     return {
         # oxe_kwargs will generate dataset_kwargs_list and sampling weights
-        "oxe_kwargs": dict(
-            data_mix=placeholder(str),
-            data_dir=placeholder(str),
-            load_camera_views=("primary", "wrist"),
-            load_depth=False,
-        ),
+        # "oxe_kwargs": dict(
+        #     data_mix=placeholder(str),
+        #     data_dir=placeholder(str),
+        #     load_camera_views=("primary", "wrist"),
+        #     load_depth=False,
+        # ),
         "traj_transform_kwargs": dict(
             window_size=window_size,
             future_action_window_size=0,
@@ -149,11 +153,11 @@ def get_dataset_config(window_size=1):
                     "random_hue",
                 ],
             ),
-            num_parallel_calls=200,
+            num_parallel_calls=64,
         ),
-        "traj_transform_threads": 48,  # shared between all datasets
-        "traj_read_threads": 48,  # shared between all datasets
-        "shuffle_buffer_size": 100000,  # shared between all datasets
-        "batch_size": 1024,
+        "traj_transform_threads": 1,  # shared between all datasets
+        "traj_read_threads": 1,  # shared between all datasets
+        "shuffle_buffer_size": 1000,  # shared between all datasets
+        "batch_size": 128,
         "balance_weights": True,
     }

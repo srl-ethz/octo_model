@@ -30,16 +30,25 @@ def make_oxe_dataset_kwargs(
         action_proprio_normalization_type: Normalization type to use for proprioceptive actions.
     """
     dataset_kwargs = copy.deepcopy(OXE_DATASET_CONFIGS[name])
-    if dataset_kwargs["action_encoding"] is not ActionEncoding.EEF_POS:
+    if (
+        dataset_kwargs["action_encoding"] is not ActionEncoding.EEF_POS
+        and dataset_kwargs["action_encoding"] is not ActionEncoding.EEF_POS_MIMIC
+    ):
         raise ValueError(
-            f"Cannot load {name} since only EEF pose delta action encoding is supported."
+            f"Cannot load {name} since only EEF pose delta action encoding is supported. Current action encoding: {dataset_kwargs['action_encoding']}"
         )
 
-    # with EEF_POS actions, only the last action dimension (the gripper) is absolute
-    dataset_kwargs["absolute_action_mask"] = [False] * 6 + [True]
+    if dataset_kwargs["state_encoding"] is ActionEncoding.EEF_POS:
+        # with EEF_POS actions, only the last action dimension (the gripper) is absolute
+        dataset_kwargs["absolute_action_mask"] = [False] * 6 + [True]
 
-    # we also want to skip normalizing the gripper action
-    dataset_kwargs["action_normalization_mask"] = [True] * 6 + [False]
+        # we also want to skip normalizing the gripper action
+        dataset_kwargs["action_normalization_mask"] = [True] * 6 + [False]
+    elif dataset_kwargs["state_encoding"] is ActionEncoding.EEF_POS_MIMIC:
+        # with EEF_POS_MIMIC actions, all action dimensions are absolute
+        dataset_kwargs["action_normalization_mask"] = ([False] * 6 + [True] * 11,)
+        # we also want to skip normalizing the gripper action
+        dataset_kwargs["action_normalization_mask"] = [False] * 6 + [True]
 
     # adjust loaded camera views
     if missing_keys := (set(load_camera_views) - set(dataset_kwargs["image_obs_keys"])):
@@ -65,14 +74,14 @@ def make_oxe_dataset_kwargs(
     if load_language:
         dataset_kwargs["language_key"] = "language_instruction"
 
-    dataset_kwargs[
-        "action_proprio_normalization_type"
-    ] = action_proprio_normalization_type
+    dataset_kwargs["action_proprio_normalization_type"] = (
+        action_proprio_normalization_type
+    )
 
     del dataset_kwargs["state_encoding"]
     del dataset_kwargs["action_encoding"]
 
-    dataset_kwargs["standardize_fn"] = OXE_STANDARDIZATION_TRANSFORMS[name]
+    # dataset_kwargs["standardize_fn"] = OXE_STANDARDIZATION_TRANSFORMS[name]
 
     return {"name": name, "data_dir": data_dir, **dataset_kwargs}
 

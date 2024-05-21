@@ -9,8 +9,12 @@ get_base_config = imp.load_source(
 ).get_config
 
 from octo.data.utils.text_processing import HFTokenizer
-from octo.model.components.action_heads import DiffusionActionHead
-from octo.model.components.tokenizers import ImageTokenizer, LanguageTokenizer
+from octo.model.components.action_heads import DiffusionActionHead, L1ActionHead
+from octo.model.components.tokenizers import (
+    ImageTokenizer,
+    LanguageTokenizer,
+    LowdimObsTokenizer,
+)
 from octo.model.components.vit_encoders import SmallStem16
 from octo.utils.spec import ModuleSpec
 from octo.utils.train_utils import hf_weights_loader
@@ -27,7 +31,9 @@ def get_config(config_string=None):
     config = get_base_config(config_string)
 
     config["window_size"] = 2
-    config["num_steps"] = 300000
+    # config["num_steps"] = 300000
+    config["num_steps"] = 50000
+    config["shuffle_buffer_size"] = 1000
     config["model"]["observation_tokenizers"] = {
         "primary": ModuleSpec.create(
             ImageTokenizer,
@@ -35,11 +41,23 @@ def get_config(config_string=None):
             task_stack_keys=["image_primary"],
             encoder=ModuleSpec.create(SmallStem16),
         ),
-        "wrist": ModuleSpec.create(
+        "secondary": ModuleSpec.create(
             ImageTokenizer,
-            obs_stack_keys=["image_wrist"],
-            task_stack_keys=["image_wrist"],
+            obs_stack_keys=["image_secondary"],
+            task_stack_keys=["image_secondary"],
             encoder=ModuleSpec.create(SmallStem16),
+        ),
+        # "wrist": ModuleSpec.create(
+        #     ImageTokenizer,
+        #     obs_stack_keys=["image_wrist"],
+        #     task_stack_keys=["image_wrist"],
+        #     encoder=ModuleSpec.create(SmallStem16),
+        # ),
+        "proprio": ModuleSpec.create(
+            LowdimObsTokenizer,
+            discretize=False,
+            n_bins=256,
+            obs_keys=["proprio"],
         ),
     }
     config["model"]["task_tokenizers"] = {
@@ -51,11 +69,11 @@ def get_config(config_string=None):
     }
     config["model"]["readouts"] = {"action": 1}
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        DiffusionActionHead,
+        L1ActionHead,
         readout_key="readout_action",
-        use_map=False,
-        pred_horizon=4,
-        action_dim=7,
+        pred_horizon=20,
+        action_dim=17,
+        max_action=120.0,
     )
 
     # We augment differently for the primary and wrist cameras
@@ -94,12 +112,17 @@ def get_config(config_string=None):
 
     config["dataset_kwargs"]["frame_transform_kwargs"]["resize_size"] = {
         "primary": (256, 256),  # workspace camera is at 256x256
-        "wrist": (128, 128),  # wrist camera is at 128x128
+        "secondary": (256, 256),
+        # "wrist": (256, 256),
     }
     config["dataset_kwargs"]["frame_transform_kwargs"]["image_augment_kwargs"] = [
         primary_augment_kwargs,
-        wrist_augment_kwargs,
+        # have the same augmentations for the top camera
+        primary_augment_kwargs,
+        # wrist_augment_kwargs,
     ]
+
+    config["frame_transform_threads"] = 8
 
     config = update_config(
         config,
@@ -108,18 +131,55 @@ def get_config(config_string=None):
         ),
         dataset_kwargs=dict(
             oxe_kwargs=dict(
-                data_mix="oxe_magic_soup",
-                data_dir="gs://rail-octo-central2/resize_256_256",
-                load_camera_views=("primary", "wrist"),
+                data_mix="mimic",
+                data_dir="/home/erbauer/tensorflow_datasets/",
+                load_camera_views=(
+                    "primary",
+                    "secondary",
+                ),
                 load_depth=False,
+                load_proprio=True,
             ),
             traj_transform_kwargs=dict(
-                future_action_window_size=3,
+                future_action_window_size=19,
             ),
-            batch_size=128,
-            shuffle_buffer_size=500000,
-            balance_weights=True,
+            batch_size=64,
+            shuffle_buffer_size=1000,
+            balance_weights=False,
         ),
+        # {
+        #     "name": "faive_dataset",
+        #     "data_dir": "/home/erbauer/tensorflow_datasets/",
+        #     "image_obs_keys": {"primary": "image", "top": "top_image"},
+        #     "state_obs_keys": ["state"],
+        #     "language_key": "language_instruction",
+        #     "action_proprio_normalization_type": "normal",
+        #     # All actions are relative deltas, except for the last one (gripper) which is absolute
+        #     # Specifying this is only necessary if you want to predict > 1 step into the future
+        #     # For Faive, 6 relative delta/twist outputs and 11 aboslute hand outputs
+        #     "absolute_action_mask": [False] * 6 + [True] * 11,
+        #     # standardize_fn is dynamically loaded from a file
+        #     # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
+        #     # TODO: check if this is necessary for Faive
+        #     # "standardize_fn": "octo/data/oxe/oxe_standardization_transforms.py:bridge_dataset_transform",
+        #     # If the default data loading speed is too slow, try these:
+        #     # "num_parallel_reads": 8,  # for reading from disk / GCS
+        #     # "num_parallel_calls": 16,  # for initial dataset construction
+        # },
+        # dict(
+        #     oxe_kwargs=dict(
+        #         data_mix="oxe_magic_soup",
+        #         data_dir="gs://rail-octo-central2/resize_256_256",
+        #         load_camera_views=("primary", "wrist"),
+        #         load_depth=False,
+        #     ),
+        #     traj_transform_kwargs=dict(
+        #         future_action_window_size=3,
+        #     ),
+        #     batch_size=128,
+        #     shuffle_buffer_size=500000,
+        #     balance_weights=True,
+        # ),
         text_processor=ModuleSpec.create(
             HFTokenizer,
             tokenizer_name="t5-base",
@@ -137,7 +197,6 @@ def get_config(config_string=None):
                 hf_model="t5-base",
             ),
         ),
-        eval_datasets=["bridge_dataset"],
+        eval_datasets=["faive_dataset"],
     )
-
     return config
