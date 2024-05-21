@@ -111,21 +111,23 @@ def main(_):
     #
     #########
 
-    name = format_name_with_config(
-        FLAGS.name,
-        FLAGS.config.to_dict(),
-    )
-    wandb_id = "{name}_{time}".format(
-        name=name,
-        time=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
-    )
+    # name = format_name_with_config(
+    #     FLAGS.name,
+    #     FLAGS.config.to_dict(),
+    # )
+    # wandb_id = "{name}_{time}".format(
+    #     name=name,
+    #     time=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
+    # )
     wandb.init(
         config=FLAGS.config.to_dict(),
-        id=wandb_id,
-        name=name,
+        # id=wandb_id,
+        # name=name,
         mode="disabled" if FLAGS.debug else None,
         **FLAGS.config.wandb,
     )
+    wandb_id = wandb.run.id
+    name = wandb.run.name
 
     #########
     #

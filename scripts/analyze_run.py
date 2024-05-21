@@ -10,12 +10,12 @@ from glob import glob
 import os
 
 wrist_axis_names = [
-    "twist.linear.x",
-    "twist.linear.y",
-    "twist.linear.z",
-    "twist.angular.x",
-    "twist.angular.y",
-    "twist.angular.z",
+    "delta rot x",
+    "delta rot y",
+    "delta rot z",
+    "delta trans x",
+    "delta trans y",
+    "delta trans z",
 ]
 gripper_axis_names = [f"gripper.angle.{i}" for i in range(11)]
 axis_names = wrist_axis_names + gripper_axis_names
@@ -30,7 +30,7 @@ def find_files(root_dir):
     return data
 
 
-def plot_axes(data, axes, save_dir):
+def plot_axes(data, axes, save_dir, wrist_cmd_type="delta"):
     pred_actions = np.array(data["pred_actions"])
     gt_actions = np.array(data["gt_actions"])
 
@@ -52,6 +52,27 @@ def plot_axes(data, axes, save_dir):
         # Save the plot
         plt.savefig(os.path.join(save_dir, f"axis_{axis_id}_plot.png"))
         plt.close()
+
+    if wrist_cmd_type == "delta":
+        pred_proprio = np.array(data["pred_next_proprio"])
+        gt_proprio = np.array(data["gt_next_proprio"])
+
+        # Plot each axis separately
+        for axis_id in axes:
+            print(f"Pred proprio shape: {pred_proprio.shape}")
+            pred_proprio = pred_proprio.squeeze()
+            plt.figure(figsize=(8, 6))
+            plt.plot(pred_proprio[:, axis_id], label="Predicted", color="blue")
+            plt.plot(gt_proprio[:, axis_id], label="Ground Truth", color="red")
+            plt.title(f"Delta prediction: {axis_names[axis_id]}")
+            plt.xlabel("Time")
+            plt.ylabel("Value")
+            plt.grid(True)
+            plt.tight_layout()
+
+            # Save the plot
+            plt.savefig(os.path.join(save_dir, f"delta_{axis_id}_plot.png"))
+            plt.close()
 
 
 if __name__ == "__main__":

@@ -74,7 +74,12 @@ class FaiveGym(gym.Env):
         )
         self.policy_player_agent = policy_player_agent
         self.log_dir = log_dir
-        self.log_dict = {"pred_actions": [], "gt_actions": []}
+        self.log_dict = {
+            "pred_actions": [],
+            "gt_actions": [],
+            "gt_next_proprio": [],
+            "pred_next_proprio": [],
+        }
         # avoid name collision when storing logs
         self.export_counter = 0
 
@@ -82,14 +87,20 @@ class FaiveGym(gym.Env):
         self.policy_player_agent.publish(
             hand_policy=action[6:], wrist_policy=action[:6]
         )
-        obs, gt_action_dict = self.policy_player_agent.get_current_observations()
+        obs, gt_reference = self.policy_player_agent.get_current_observations()
 
         self.log_dict["pred_actions"].append(action)
 
-        if gt_action_dict is not None:
-            self.log_dict["gt_actions"].append(gt_action_dict["action"])
-            loss = np.linalg.norm(action - gt_action_dict["action"])
-            print(f"Action L2 reconstruction loss: {loss}")
+        if self.policy_player_agent.wrist_cmd_type == "delta":
+            self.log_dict["pred_next_proprio"].append(obs["proprio"] - action)
+
+        if gt_reference is not None:
+            gt_action, gt_next_proprio = gt_reference
+            self.log_dict["gt_actions"].append(gt_action["action"])
+            self.log_dict["gt_next_proprio"].append(gt_next_proprio)
+
+            # loss = np.linalg.norm(action - gt_action_dict["action"])
+            # print(f"Action L2 reconstruction loss: {loss}")
 
         truncated = False
 
@@ -113,6 +124,11 @@ class FaiveGym(gym.Env):
         #
         obs, action = self.policy_player_agent.get_current_observations()
         # obs = convert_obs(image_obs, qpos, self.im_size)
-        self.log_dict = {"pred_actions": [], "gt_actions": []}
-        print(f'At reset, obs keys: {obs.keys()}')
+        self.log_dict = {
+            "pred_actions": [],
+            "gt_actions": [],
+            "gt_next_proprio": [],
+            "pred_next_proprio": [],
+        }
+        print(f"At reset, obs keys: {obs.keys()}")
         return obs, {}
