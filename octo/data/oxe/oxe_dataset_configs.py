@@ -47,7 +47,7 @@ OXE_DATASET_CONFIGS = {
         "state_obs_keys": ["state"],
         "state_encoding": StateEncoding.POS_MIMIC,
         "action_encoding": ActionEncoding.EEF_POS_MIMIC,
-        "absolute_action_mask": [False] * 6 + [True] * 11,
+        "absolute_action_mask": [True] * 17,
     },
     "fractal20220817_data": {
         "image_obs_keys": {"primary": "image", "secondary": None, "wrist": None},
