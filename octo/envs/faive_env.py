@@ -2,6 +2,7 @@ import time
 import os
 import gym
 import numpy as np
+import imageio
 
 
 # def convert_obs(image_obs, qpos, im_size):
@@ -82,12 +83,22 @@ class FaiveGym(gym.Env):
         }
         # avoid name collision when storing logs
         self.export_counter = 0
+        self.raw_images = {}
 
     def step(self, action):
         self.policy_player_agent.publish(
             hand_policy=action[6:], wrist_policy=action[:6]
         )
-        obs, gt_reference = self.policy_player_agent.get_current_observations()
+        obs, gt_reference, raw_images = (
+            self.policy_player_agent.get_current_observations()
+        )
+
+        for cam_name, img in raw_images.items():
+            if cam_name not in self.raw_images:
+                self.raw_images[cam_name] = []
+                self.raw_images[cam_name].append(img)
+            else:
+                self.raw_images[cam_name].append(img)
 
         self.log_dict["pred_actions"].append(action)
 
@@ -114,6 +125,13 @@ class FaiveGym(gym.Env):
         os.makedirs(os.path.dirname(export_file), exist_ok=True)
         self.export_counter += 1
         np.save(export_file, self.log_dict)
+
+        for cam_name, img_list in self.raw_images.items():
+            export_file = os.path.join(
+                self.log_dir, f"raw_images_{cam_name}_{self.export_counter}.mp4"
+            )
+            print(f"Exporting raw images to {export_file}!")
+            imageio.mimsave(export_file, img_list)
 
     def reset(self, seed=None, options=None):
         # super().reset(seed=seed)

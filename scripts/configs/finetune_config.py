@@ -15,7 +15,7 @@ def get_config(config_string="full,language_conditioned"):
 
     FINETUNING_KWARGS = {
         "name": "faive_dataset",
-        "data_dir": "/home/erbauer/tensorflow_datasets/",
+        "data_dir": "/data/erbauer/tensorflow_datasets/",
         "image_obs_keys": {"primary": "image", "top": "top_image"},
         # "image_obs_keys": {"primary": "image"},
         "state_obs_keys": ["state"],

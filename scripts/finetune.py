@@ -307,7 +307,7 @@ def main(_):
             FLAGS.config.save_dir,
             FLAGS.config.wandb.project,
             FLAGS.config.wandb.group or "",
-            wandb_id,
+            name,
         )
         wandb.config.update(dict(save_dir=save_dir), allow_val_change=True)
         logging.info("Saving to %s", save_dir)
