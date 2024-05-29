@@ -96,9 +96,10 @@ class FaiveGym(gym.Env):
         for cam_name, img in raw_images.items():
             if cam_name not in self.raw_images:
                 self.raw_images[cam_name] = []
-                self.raw_images[cam_name].append(img)
-            else:
-                self.raw_images[cam_name].append(img)
+
+            # convert from bgr to rgb
+            img = img[..., ::-1]
+            self.raw_images[cam_name].append(img)
 
         self.log_dict["pred_actions"].append(action)
 
@@ -140,7 +141,7 @@ class FaiveGym(gym.Env):
         # self.is_gripper_closed = False
         # self.num_consecutive_gripper_change_actions = 0
         #
-        obs, action = self.policy_player_agent.get_current_observations()
+        obs, action, _ = self.policy_player_agent.get_current_observations()
         # obs = convert_obs(image_obs, qpos, self.im_size)
         self.log_dict = {
             "pred_actions": [],
