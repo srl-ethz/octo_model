@@ -16,6 +16,7 @@ Target configuration:
     state_encoding: Type of state encoding used -- see above
     action_encoding: Type of action encoding used, e.g. EEF position vs joint position control
 """
+
 from enum import IntEnum
 
 
@@ -27,6 +28,7 @@ class StateEncoding(IntEnum):
     POS_QUAT = 2  # EEF XYZ + quaternion + gripper open/close
     JOINT = 3  # 7 x joint angles (padding added if fewer) + gripper open/close
     JOINT_BIMANUAL = 4  # 2 x [6 x joint angles + gripper open/close]
+    POS_MIMIC = 5  # 6 x EEF RPY + XYZ + 11-dim absolute gripper
 
 
 class ActionEncoding(IntEnum):
@@ -35,9 +37,18 @@ class ActionEncoding(IntEnum):
     EEF_POS = 1  # EEF delta XYZ + roll-pitch-yaw + gripper open/close
     JOINT_POS = 2  # 7 x joint delta position + gripper open/close
     JOINT_POS_BIMANUAL = 3  # 2 x [6 x joint pos + gripper]
+    EEF_POS_MIMIC = 4  # 6 x EEF delta RPY + XYZ + 11-dim absolute gripper
 
 
 OXE_DATASET_CONFIGS = {
+    "faive_dataset": {
+        "image_obs_keys": {"primary": "image", "secondary": "top_image", "wrist": "wrist_image"},
+        "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
+        "state_obs_keys": ["state"],
+        "state_encoding": StateEncoding.POS_MIMIC,
+        "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+        "absolute_action_mask": [True] * 17,
+    },
     "fractal20220817_data": {
         "image_obs_keys": {"primary": "image", "secondary": None, "wrist": None},
         "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},

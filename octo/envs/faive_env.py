@@ -2,6 +2,7 @@ import time
 import os
 import gym
 import numpy as np
+import imageio
 
 
 # def convert_obs(image_obs, qpos, im_size):
@@ -74,22 +75,43 @@ class FaiveGym(gym.Env):
         )
         self.policy_player_agent = policy_player_agent
         self.log_dir = log_dir
-        self.log_dict = {"pred_actions": [], "gt_actions": []}
+        self.log_dict = {
+            "pred_actions": [],
+            "gt_actions": [],
+            "gt_next_proprio": [],
+            "pred_next_proprio": [],
+        }
         # avoid name collision when storing logs
         self.export_counter = 0
+        self.raw_images = {}
 
     def step(self, action):
         self.policy_player_agent.publish(
             hand_policy=action[6:], wrist_policy=action[:6]
         )
-        obs, gt_action_dict = self.policy_player_agent.get_current_observations()
+        obs, gt_reference, raw_images = (
+            self.policy_player_agent.get_current_observations()
+        )
+
+        for cam_name, img in raw_images.items():
+            if cam_name not in self.raw_images:
+                self.raw_images[cam_name] = []
+                self.raw_images[cam_name].append(img)
+            else:
+                self.raw_images[cam_name].append(img)
 
         self.log_dict["pred_actions"].append(action)
 
-        if gt_action_dict is not None:
-            self.log_dict["gt_actions"].append(gt_action_dict["action"])
-            loss = np.linalg.norm(action - gt_action_dict["action"])
-            print(f"Action L2 reconstruction loss: {loss}")
+        if self.policy_player_agent.wrist_cmd_type == "delta":
+            self.log_dict["pred_next_proprio"].append(obs["proprio"] - action)
+
+        if gt_reference is not None:
+            gt_action, gt_next_proprio = gt_reference
+            self.log_dict["gt_actions"].append(gt_action["action"])
+            self.log_dict["gt_next_proprio"].append(gt_next_proprio)
+
+            # loss = np.linalg.norm(action - gt_action_dict["action"])
+            # print(f"Action L2 reconstruction loss: {loss}")
 
         truncated = False
 
@@ -104,6 +126,13 @@ class FaiveGym(gym.Env):
         self.export_counter += 1
         np.save(export_file, self.log_dict)
 
+        for cam_name, img_list in self.raw_images.items():
+            export_file = os.path.join(
+                self.log_dir, f"raw_images_{cam_name}_{self.export_counter}.mp4"
+            )
+            print(f"Exporting raw images to {export_file}!")
+            imageio.mimsave(export_file, img_list)
+
     def reset(self, seed=None, options=None):
         # super().reset(seed=seed)
         # self.widowx_client.reset()
@@ -113,6 +142,11 @@ class FaiveGym(gym.Env):
         #
         obs, action = self.policy_player_agent.get_current_observations()
         # obs = convert_obs(image_obs, qpos, self.im_size)
-        self.log_dict = {"pred_actions": [], "gt_actions": []}
-        print(f'At reset, obs keys: {obs.keys()}')
+        self.log_dict = {
+            "pred_actions": [],
+            "gt_actions": [],
+            "gt_next_proprio": [],
+            "pred_next_proprio": [],
+        }
+        print(f"At reset, obs keys: {obs.keys()}")
         return obs, {}

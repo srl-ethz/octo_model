@@ -15,15 +15,17 @@ def get_config(config_string="full,language_conditioned"):
 
     FINETUNING_KWARGS = {
         "name": "faive_dataset",
-        "data_dir": "/home/erbauer/tensorflow_datasets/",
+        "data_dir": "/data/erbauer/tensorflow_datasets/",
         "image_obs_keys": {"primary": "image", "top": "top_image"},
+        # "image_obs_keys": {"primary": "image"},
         "state_obs_keys": ["state"],
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
         # All actions are relative deltas, except for the last one (gripper) which is absolute
         # Specifying this is only necessary if you want to predict > 1 step into the future
         # For Faive, 6 relative delta/twist outputs and 11 aboslute hand outputs
-        "absolute_action_mask": [False] * 6 + [True] * 11,
+        # "absolute_action_mask": [False] * 6 + [True] * 11,
+        "absolute_action_mask": [True] * 17,
         # standardize_fn is dynamically loaded from a file
         # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
         # TODO: check if this is necessary for Faive
@@ -48,22 +50,28 @@ def get_config(config_string="full,language_conditioned"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(50000)
+    max_steps = FieldReference(10000)
     window_size = FieldReference(default=1)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=256,
+        batch_size=128,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
         eval_interval=5000,
-        save_interval=5000,
+        save_interval=2500,
         save_dir=placeholder(str),
         seed=42,
         wandb=dict(
-            project="octo_finetune", group=placeholder(str), entity=placeholder(str)
+            project="octo_finetune",
+            group="octo_finetune",
+            job_type="finetune",
+            tags=[
+                "finetune",
+            ],
+            entity="srl_ethz",
         ),
         dataset_kwargs=FINETUNING_KWARGS,
         modality=task,
@@ -74,7 +82,7 @@ def get_config(config_string="full,language_conditioned"):
                 name="cosine",
                 init_value=0.0,
                 peak_value=3e-4,
-                warmup_steps=2000,
+                warmup_steps=1000,
                 decay_steps=max_steps,
                 end_value=0.0,
             ),
@@ -84,8 +92,8 @@ def get_config(config_string="full,language_conditioned"):
             grad_accumulation_steps=None,  # if you are using grad accumulation, you need to adjust max_steps accordingly
         ),
         val_kwargs=dict(
-            val_shuffle_buffer_size=1000,
-            num_val_batches=16,
+            val_shuffle_buffer_size=100,
+            num_val_batches=8,
         ),
         viz_kwargs=dict(
             eval_batch_size=128,
@@ -109,7 +117,7 @@ def get_config(config_string="full,language_conditioned"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        future_action_window_size=49,
+        future_action_window_size=9,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -150,7 +158,7 @@ def get_config(config_string="full,language_conditioned"):
             "top": (
                 256,
                 256,
-            ),  # top camera can be downsized to same resolution as front
+            ),  # top camera with same res
         },
         image_augment_kwargs=[
             workspace_augment_kwargs,

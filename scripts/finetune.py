@@ -3,6 +3,8 @@ from functools import partial
 import imp
 import os
 
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+
 from absl import app, flags, logging
 import flax
 from flax.traverse_util import flatten_dict
@@ -109,21 +111,23 @@ def main(_):
     #
     #########
 
-    name = format_name_with_config(
-        FLAGS.name,
-        FLAGS.config.to_dict(),
-    )
-    wandb_id = "{name}_{time}".format(
-        name=name,
-        time=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
-    )
+    # name = format_name_with_config(
+    #     FLAGS.name,
+    #     FLAGS.config.to_dict(),
+    # )
+    # wandb_id = "{name}_{time}".format(
+    #     name=name,
+    #     time=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
+    # )
     wandb.init(
         config=FLAGS.config.to_dict(),
-        id=wandb_id,
-        name=name,
+        # id=wandb_id,
+        # name=name,
         mode="disabled" if FLAGS.debug else None,
         **FLAGS.config.wandb,
     )
+    wandb_id = wandb.run.id
+    name = wandb.run.name
 
     #########
     #
@@ -203,31 +207,32 @@ def main(_):
     ######################
 
     config = pretrained_model.config
-    # del config["model"]["observation_tokenizers"]["wrist"]
+    del config["model"]["observation_tokenizers"]["wrist"]
     ###
-    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
-        LowdimObsTokenizer,
-        discretize=False,
-        n_bins=256,
-        # bin_type="normal",
-        # low=-2.0,
-        # high=2.0,
-        obs_keys=["proprio"],
-    )
+    # config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+    #     LowdimObsTokenizer,
+    #     discretize=False,
+    #     n_bins=256,
+    #     # bin_type="normal",
+    #     # low=-2.0,
+    #     # high=2.0,
+    #     obs_keys=["proprio"],
+    # )
 
-    config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
-        ImageTokenizer,
-        obs_stack_keys=["image_top"],
-        task_stack_keys=["image_top"],
-        encoder=ModuleSpec.create(SmallStem16),
-    )
+    # config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
+    #     ImageTokenizer,
+    #     obs_stack_keys=["image_top"],
+    #     task_stack_keys=["image_top"],
+    #     encoder=ModuleSpec.create(SmallStem16),
+    # )
 
     # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
-        pred_horizon=50,
+        pred_horizon=10,
         action_dim=17,
         readout_key="readout_action",
+        max_action=120.0,
     )
 
     # config["model"]["heads"]["action"] = ModuleSpec.create(
@@ -302,7 +307,7 @@ def main(_):
             FLAGS.config.save_dir,
             FLAGS.config.wandb.project,
             FLAGS.config.wandb.group or "",
-            wandb_id,
+            name,
         )
         wandb.config.update(dict(save_dir=save_dir), allow_val_change=True)
         logging.info("Saving to %s", save_dir)

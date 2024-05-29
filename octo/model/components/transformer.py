@@ -44,9 +44,9 @@ class MlpBlock(nn.Module):
     dtype: Dtype = jnp.float32
     out_dim: Optional[int] = None
     dropout_rate: float = 0.1
-    kernel_init: Callable[
-        [PRNGKey, Shape, Dtype], jax.Array
-    ] = nn.initializers.xavier_uniform()
+    kernel_init: Callable[[PRNGKey, Shape, Dtype], jax.Array] = (
+        nn.initializers.xavier_uniform()
+    )
     bias_init: Callable[[PRNGKey, Shape, Dtype], jax.Array] = nn.initializers.normal(
         stddev=1e-6
     )
@@ -238,7 +238,14 @@ def common_transformer_sizes(transformer_size: str) -> (int, dict):
             transformer_kwargs (dict): The kwargs to pass to the transformer
 
     """
-    assert transformer_size in ["dummy", "vanilla", "vit_s", "vit_b", "vit_l", "vit_h"]
+    assert transformer_size in [
+        "dummy",
+        "vanilla",
+        "vit_s",
+        "vit_b",
+        "vit_l",
+        "vit_h",
+    ], f"Transformer size {transformer_size} not recognized."
     default_params = {
         "attention_dropout_rate": 0.0,
         "add_position_embedding": False,

@@ -19,7 +19,7 @@ import tqdm
 import wandb
 
 import octo
-from octo.data.dataset import make_interleaved_dataset
+from octo.data.dataset import make_interleaved_dataset, make_single_dataset
 from octo.data.oxe import make_oxe_dataset_kwargs_and_weights
 from octo.model.octo_model import OctoModel
 from octo.utils import jax_utils
@@ -48,7 +48,7 @@ flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 config_dir = os.path.join(os.path.dirname(__file__), "configs")
 config_flags.DEFINE_config_file(
     "config",
-    os.path.join(config_dir, "config.py:transformer_bc"),
+    os.path.join(config_dir, "octo_pretrain_config.py:vit_b"),
     "File path to the training hyperparameter configuration.",
     lock_config=False,
 )
@@ -151,6 +151,7 @@ def main(_):
         del FLAGS.config.dataset_kwargs["oxe_kwargs"]
 
     train_data = make_interleaved_dataset(**FLAGS.config.dataset_kwargs, train=True)
+    # dataset = make_single_dataset(**FLAGS.config.dataset_kwargs, train=True)
 
     # consolidate dataset statistics into one big dict
     dataset_statistics = {
@@ -326,13 +327,19 @@ def main(_):
         if (i + 1) % FLAGS.config.viz_interval == 0:
             logging.info("Visualizing...")
             with timer("visualize"):
-                viz_metrics = viz_callback(train_state, i + 1)
-                wandb_log(viz_metrics, step=i + 1)
+                try:
+                    viz_metrics = viz_callback(train_state, i + 1)
+                    wandb_log(viz_metrics, step=i + 1)
+                except Exception as e:
+                    logging.error("Error during visualization: %s", e)
 
             if rollout_callback is not None:
                 with timer("rollout"):
-                    rollout_metrics = rollout_callback(train_state, i + 1)
-                    wandb_log(rollout_metrics, step=i + 1)
+                    try:
+                        rollout_metrics = rollout_callback(train_state, i + 1)
+                        wandb_log(rollout_metrics, step=i + 1)
+                    except Exception as e:
+                        logging.error("Error during rollout visualization: %s", e)
 
         timer.tock("total")
         if (i + 1) % FLAGS.config.log_interval == 0:

@@ -1,6 +1,5 @@
 """Defines dataset mixtures and weights for the Open X-Embodiment Datasets."""
 
-
 BRIDGE_MIX = [
     ("bridge_dataset", 1.0),
 ]
@@ -128,9 +127,14 @@ OXE_FULL_MIX = [
     ("berkeley_gnm_sac_son", 1.0),
 ]
 
+MIMIC_MIX = [
+    ("faive_dataset", 1.0),
+]
+
 OXE_NAMED_MIXES = {
     "bridge": BRIDGE_MIX,
     "rtx": RT_X_MIX,
     "rtx_franka": RT_X_MIX + OXE_FRANKA_MIX,
     "oxe_magic_soup": OXE_MAGIC_SOUP,
+    "mimic": MIMIC_MIX,
 }
