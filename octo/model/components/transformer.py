@@ -264,6 +264,12 @@ def common_transformer_sizes(transformer_size: str) -> (int, dict):
             num_attention_heads=8,
             dropout_rate=0.1,
         ),
+        "vit_t": dict(
+            num_layers=12,
+            mlp_dim=768,
+            num_attention_heads=3,
+            dropout_rate=0.0,
+        ),
         "vit_s": dict(
             num_layers=12,
             mlp_dim=1536,
@@ -293,6 +299,7 @@ def common_transformer_sizes(transformer_size: str) -> (int, dict):
     TOKEN_DIMS = {
         "dummy": 256,
         "vanilla": 256,
+        "vit_t": 192,
         "vit_s": 384,
         "vit_b": 768,
         "vit_l": 1024,

@@ -53,12 +53,11 @@ def get_config(
     transformer_size="vit_s",
 ):
     print("Creating config with: ", locals())
-    num_steps = FieldReference(default=int(2e6))
     window_size = FieldReference(default=1)
     return ConfigDict(
         dict(
             seed=42,
-            num_steps=num_steps,
+            num_steps=2e6,
             save_dir=placeholder(str),
             model=get_model_config(transformer_size),
             window_size=window_size,
@@ -122,7 +121,7 @@ def get_dataset_config(window_size=1):
         ),
     )
 
-    return {
+    return dict(
         # oxe_kwargs will generate dataset_kwargs_list and sampling weights
         # "oxe_kwargs": dict(
         #     data_mix=placeholder(str),
@@ -132,27 +131,29 @@ def get_dataset_config(window_size=1):
         # ),
         "traj_transform_kwargs": dict(
             window_size=window_size,
-            future_action_window_size=9,
+            action_horizon=9,
             goal_relabeling_strategy="uniform",
             subsample_length=100,
             **task_augmentation,
         ),
-        "frame_transform_kwargs": dict(
-            resize_size=(256, 256),
+        frame_transform_kwargs=dict(
+            resize_size=dict(primary=(256, 256)),
             image_dropout_prob=0.0,
             image_augment_kwargs=dict(
-                random_resized_crop=dict(scale=[0.8, 1.0], ratio=[0.9, 1.1]),
-                random_brightness=[0.2],
-                random_contrast=[0.8, 1.2],
-                random_saturation=[0.8, 1.2],
-                random_hue=[0.1],
-                augment_order=[
-                    "random_resized_crop",
-                    "random_brightness",
-                    "random_contrast",
-                    "random_saturation",
-                    "random_hue",
-                ],
+                primary=dict(
+                    random_resized_crop=dict(scale=[0.8, 1.0], ratio=[0.9, 1.1]),
+                    random_brightness=[0.2],
+                    random_contrast=[0.8, 1.2],
+                    random_saturation=[0.8, 1.2],
+                    random_hue=[0.1],
+                    augment_order=[
+                        "random_resized_crop",
+                        "random_brightness",
+                        "random_contrast",
+                        "random_saturation",
+                        "random_hue",
+                    ],
+                )
             ),
             num_parallel_calls=64,
         ),

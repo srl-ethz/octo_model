@@ -1,6 +1,8 @@
 from ml_collections import ConfigDict
 from ml_collections.config_dict import FieldReference, placeholder
 
+from octo.utils.spec import ModuleSpec
+
 
 def get_config(config_string="full,language_conditioned"):
     mode, task = config_string.split(",")
@@ -22,14 +24,14 @@ def get_config(config_string="full,language_conditioned"):
             "wrist": "wrist_image",
         },
         # "image_obs_keys": {"primary": "image"},
-        "state_obs_keys": ["state"],
+        "proprio_obs_key": "state",
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
         # All actions are relative deltas, except for the last one (gripper) which is absolute
         # Specifying this is only necessary if you want to predict > 1 step into the future
         # For Faive, 6 relative delta/twist outputs and 11 aboslute hand outputs
         # "absolute_action_mask": [False] * 6 + [True] * 11,
-        "absolute_action_mask": [True] * 17,
+        "action_normalization_mask": [True] * 17,
         # standardize_fn is dynamically loaded from a file
         # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
         # TODO: check if this is necessary for Faive
@@ -49,8 +51,6 @@ def get_config(config_string="full,language_conditioned"):
             "heads_*.map_head.probe",
             "heads_*.map_head.MultiHeadDotProductAttention_0.*",
         )
-    elif mode == "frozen_transformer":
-        frozen_keys = ("octo_transformer.BlockTransformer_0.*",)
     else:
         raise ValueError("Invalid mode")
 
@@ -121,7 +121,7 @@ def get_config(config_string="full,language_conditioned"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        future_action_window_size=9,
+        action_horizon=9,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -166,9 +166,9 @@ def get_config(config_string="full,language_conditioned"):
             "wrist": (256, 256),
         },
         image_augment_kwargs=[
-            workspace_augment_kwargs,
-            workspace_augment_kwargs,
-            wrist_augment_kwargs,
+            primary=workspace_augment_kwargs,
+            secondary=workspace_augment_kwargs,
+            wrist=wrist_augment_kwargs,
         ],
     )
     # If the default data loading speed is too slow, try these:

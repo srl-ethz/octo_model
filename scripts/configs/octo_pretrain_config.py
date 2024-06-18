@@ -2,7 +2,7 @@ from copy import deepcopy
 import imp
 import os
 
-from ml_collections import ConfigDict
+from ml_collections import ConfigDict, FieldReference
 
 get_base_config = imp.load_source(
     "config", os.path.join(os.path.dirname(__file__), "config.py")
@@ -34,6 +34,7 @@ def get_config(config_string=None):
     # config["num_steps"] = 300000
     config["num_steps"] = 50000
     config["shuffle_buffer_size"] = 1000
+    action_dim = FieldReference(17)
     config["model"]["observation_tokenizers"] = {
         "primary": ModuleSpec.create(
             ImageTokenizer,
@@ -72,8 +73,8 @@ def get_config(config_string=None):
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
         readout_key="readout_action",
-        pred_horizon=10,
-        action_dim=17,
+        action_horizon=10,
+        action_dim=action_dim,
         max_action=120.0,
     )
 
@@ -117,16 +118,18 @@ def get_config(config_string=None):
         # "wrist": (256, 256),
     }
     config["dataset_kwargs"]["frame_transform_kwargs"]["image_augment_kwargs"] = [
-        primary_augment_kwargs,
+        primary=primary_augment_kwargs,
         # have the same augmentations for the top camera
-        # primary_augment_kwargs,
-        # wrist_augment_kwargs,
+        # secondary=primary_augment_kwargs,
+        # wrist=wrist_augment_kwargs,
     ]
 
     config["frame_transform_threads"] = 8
 
     config = update_config(
         config,
+        num_steps=300000,
+        window_size=2,
         optimizer=dict(
             frozen_keys=("*hf_model*",),
         ),
@@ -140,9 +143,11 @@ def get_config(config_string=None):
                 ),
                 load_depth=False,
                 load_proprio=False,
+                force_recompute_dataset_statistics=False,
             ),
             traj_transform_kwargs=dict(
-                future_action_window_size=9,
+                action_horizon=9,
+                max_action_dim=action_dim,
             ),
             batch_size=64,
             shuffle_buffer_size=1000,
