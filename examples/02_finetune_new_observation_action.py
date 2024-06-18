@@ -18,7 +18,7 @@ import wandb
 from octo.data.dataset import make_single_dataset
 from octo.data.utils.data_utils import NormalizationType
 from octo.model.components.action_heads import L1ActionHead
-from octo.model.components.tokenizers import LowdimObsTokenizer
+from octo.model.components.tokenizers import LowdimObsTokenizer, ImageTokenizer
 from octo.model.octo_model import OctoModel
 from octo.utils.jax_utils import initialize_compilation_cache
 from octo.utils.spec import ModuleSpec
@@ -111,7 +111,9 @@ def main(_):
     # load pre-training config and modify --> remove wrist cam, add proprio input, change action head
     # following Zhao et al. we use "action chunks" of length 50 and L1 loss for ALOHA
     config = pretrained_model.config
-    # del config["model"]["observation_tokenizers"]["wrist"]
+
+    del config["model"]["observation_tokenizers"]["wrist"]
+
     ###
     config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
         LowdimObsTokenizer,

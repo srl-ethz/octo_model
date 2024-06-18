@@ -30,7 +30,7 @@ def update_config(config, **kwargs):
 def get_config(config_string=None):
     config = get_base_config(config_string)
 
-    config["window_size"] = 2
+    config["window_size"] = 1
     # config["num_steps"] = 300000
     config["num_steps"] = 50000
     config["shuffle_buffer_size"] = 1000
@@ -41,24 +41,24 @@ def get_config(config_string=None):
             task_stack_keys=["image_primary"],
             encoder=ModuleSpec.create(SmallStem16),
         ),
-        "secondary": ModuleSpec.create(
-            ImageTokenizer,
-            obs_stack_keys=["image_secondary"],
-            task_stack_keys=["image_secondary"],
-            encoder=ModuleSpec.create(SmallStem16),
-        ),
+        # "secondary": ModuleSpec.create(
+        #     ImageTokenizer,
+        #     obs_stack_keys=["image_secondary"],
+        #     task_stack_keys=["image_secondary"],
+        #     encoder=ModuleSpec.create(SmallStem16),
+        # ),
         # "wrist": ModuleSpec.create(
         #     ImageTokenizer,
         #     obs_stack_keys=["image_wrist"],
         #     task_stack_keys=["image_wrist"],
         #     encoder=ModuleSpec.create(SmallStem16),
         # ),
-        "proprio": ModuleSpec.create(
-            LowdimObsTokenizer,
-            discretize=False,
-            n_bins=256,
-            obs_keys=["proprio"],
-        ),
+        # "proprio": ModuleSpec.create(
+        #     LowdimObsTokenizer,
+        #     discretize=False,
+        #     n_bins=256,
+        #     obs_keys=["proprio"],
+        # ),
     }
     config["model"]["task_tokenizers"] = {
         "language": ModuleSpec.create(
@@ -72,7 +72,7 @@ def get_config(config_string=None):
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
         readout_key="readout_action",
-        pred_horizon=20,
+        pred_horizon=10,
         action_dim=17,
         max_action=120.0,
     )
@@ -113,13 +113,13 @@ def get_config(config_string=None):
 
     config["dataset_kwargs"]["frame_transform_kwargs"]["resize_size"] = {
         "primary": (256, 256),  # workspace camera is at 256x256
-        "secondary": (256, 256),
+        # "secondary": (256, 256),
         # "wrist": (256, 256),
     }
     config["dataset_kwargs"]["frame_transform_kwargs"]["image_augment_kwargs"] = [
         primary_augment_kwargs,
         # have the same augmentations for the top camera
-        primary_augment_kwargs,
+        # primary_augment_kwargs,
         # wrist_augment_kwargs,
     ]
 
@@ -136,13 +136,13 @@ def get_config(config_string=None):
                 data_dir="/home/erbauer/tensorflow_datasets/",
                 load_camera_views=(
                     "primary",
-                    "secondary",
+                    # "secondary",
                 ),
                 load_depth=False,
-                load_proprio=True,
+                load_proprio=False,
             ),
             traj_transform_kwargs=dict(
-                future_action_window_size=19,
+                future_action_window_size=9,
             ),
             batch_size=64,
             shuffle_buffer_size=1000,

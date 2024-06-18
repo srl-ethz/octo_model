@@ -219,10 +219,10 @@ def main(_):
     #     obs_keys=["proprio"],
     # )
 
-    # config["model"]["observation_tokenizers"]["top"] = ModuleSpec.create(
+    # config["model"]["observation_tokenizers"]["secondary"] = ModuleSpec.create(
     #     ImageTokenizer,
-    #     obs_stack_keys=["image_top"],
-    #     task_stack_keys=["image_top"],
+    #     obs_stack_keys=["image_secondary"],
+    #     task_stack_keys=["image_secondary"],
     #     encoder=ModuleSpec.create(SmallStem16),
     # )
 
@@ -275,7 +275,6 @@ def main(_):
     model = model.replace(params=merged_params)
     del pretrained_model
 
-    print(f'Dataset stats: {dataset.dataset_statistics["proprio"]["mean"].shape}')
     #########
     #
     # Setup Optimizer and Train State

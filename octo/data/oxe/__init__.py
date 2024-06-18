@@ -113,6 +113,7 @@ def make_oxe_dataset_kwargs_and_weights(
     """
     if isinstance(data_mix, str):
         data_mix = OXE_NAMED_MIXES[data_mix]
+        print(f"Using pre-defined mix: {data_mix}")
 
     filtered_datasets, included_dataset_names = [], []
     for name, weight in data_mix:

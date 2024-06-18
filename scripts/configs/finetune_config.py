@@ -15,8 +15,12 @@ def get_config(config_string="full,language_conditioned"):
 
     FINETUNING_KWARGS = {
         "name": "faive_dataset",
-        "data_dir": "/data/erbauer/tensorflow_datasets/",
-        "image_obs_keys": {"primary": "image", "top": "top_image"},
+        "data_dir": "/home/erbauer/tensorflow_datasets/",
+        "image_obs_keys": {
+            "primary": "image",
+            "secondary": "top_image",
+            "wrist": "wrist_image",
+        },
         # "image_obs_keys": {"primary": "image"},
         "state_obs_keys": ["state"],
         "language_key": "language_instruction",
@@ -56,7 +60,7 @@ def get_config(config_string="full,language_conditioned"):
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=128,
+        batch_size=64,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
@@ -155,14 +159,16 @@ def get_config(config_string="full,language_conditioned"):
     frame_transform_kwargs = dict(
         resize_size={
             "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "top": (
+            "secondary": (
                 256,
                 256,
             ),  # top camera with same res
+            "wrist": (256, 256),
         },
         image_augment_kwargs=[
             workspace_augment_kwargs,
             workspace_augment_kwargs,
+            wrist_augment_kwargs,
         ],
     )
     # If the default data loading speed is too slow, try these:

@@ -560,6 +560,7 @@ def make_interleaved_dataset(
             if dataset_statistics is not None
             else per_dataset_stats,
         )
+
         dataset = apply_trajectory_transforms(
             dataset.repeat(),
             **traj_transform_kwargs,
