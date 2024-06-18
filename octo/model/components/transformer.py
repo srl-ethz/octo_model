@@ -115,7 +115,6 @@ class MAPHead(nn.Module):
         # TODO: dropout on head?
         y = nn.LayerNorm()(out)
 
-        # NOTE: changed from 4 to 8 for Faive
         out = out + MlpBlock(mlp_dim=nn.merge_param("mlp_dim", self.mlp_dim, 8 * d))(
             y, deterministic=not train
         )
