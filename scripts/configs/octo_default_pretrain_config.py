@@ -129,8 +129,8 @@ def get_config(config_string=None):
                     rephrase_prob=0.5,
                 ),
             ),
-            batch_size=512,
-            shuffle_buffer_size=500000,
+            batch_size=128,
+            shuffle_buffer_size=10000,
             balance_weights=True,
         ),
         text_processor=ModuleSpec.create(
@@ -149,6 +149,15 @@ def get_config(config_string=None):
                 hf_weights_loader,
                 hf_model="t5-base",
             ),
+        ),
+        wandb=dict(
+            project="octo_finetune",
+            group="octo_train",
+            job_type="train",
+            tags=[
+                "train",
+            ],
+            entity="srl_ethz",
         ),
         eval_datasets=["bridge_dataset"],
     )

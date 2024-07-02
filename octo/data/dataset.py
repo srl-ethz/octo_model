@@ -392,20 +392,25 @@ def make_dataset_from_rlds(
         if ignore_errors:
             full_dataset = full_dataset.ignore_errors()
         full_dataset = full_dataset.traj_map(restructure).filter(is_nonzero_length)
+        logging.info(f"dataset specs: {full_dataset.element_spec}")
         # tries to load from cache, otherwise computes on the fly
-        dataset_statistics = get_dataset_statistics(
-            full_dataset,
-            hash_dependencies=(
-                str(builder.info),
-                str(proprio_obs_key),
-                ModuleSpec.to_string(standardize_fn)
-                if standardize_fn is not None
-                else "",
-                *map(ModuleSpec.to_string, filter_functions),
-            ),
-            save_dir=builder.data_dir,
-            force_recompute=force_recompute_dataset_statistics,
-        )
+        try:
+            dataset_statistics = get_dataset_statistics(
+                full_dataset,
+                hash_dependencies=(
+                    str(builder.info),
+                    str(proprio_obs_key),
+                    ModuleSpec.to_string(standardize_fn)
+                    if standardize_fn is not None
+                    else "",
+                    *map(ModuleSpec.to_string, filter_functions),
+                ),
+                save_dir=builder.data_dir,
+                force_recompute=force_recompute_dataset_statistics,
+            )
+        except Exception as e:
+            logging.error(f"Failed to load statistics for dataset {name}: {e}")
+            raise e
     dataset_statistics = tree_map(np.array, dataset_statistics)
 
     # skip normalization for certain action dimensions

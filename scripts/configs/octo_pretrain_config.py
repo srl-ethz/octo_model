@@ -149,7 +149,7 @@ def get_config(config_string=None):
                 action_horizon=9,
                 max_action_dim=action_dim,
             ),
-            batch_size=64,
+            batch_size=8,
             shuffle_buffer_size=1000,
             balance_weights=False,
         ),

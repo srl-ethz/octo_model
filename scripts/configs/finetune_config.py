@@ -20,8 +20,8 @@ def get_config(config_string="full,language_conditioned"):
         "data_dir": "/home/erbauer/tensorflow_datasets/",
         "image_obs_keys": {
             "primary": "image",
-            "secondary": "top_image",
-            "wrist": "wrist_image",
+            # "secondary": "top_image",
+            # "wrist": "wrist_image",
         },
         # "image_obs_keys": {"primary": "image"},
         "proprio_obs_key": "state",
@@ -121,7 +121,7 @@ def get_config(config_string="full,language_conditioned"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=9,
+        action_horizon=10,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -159,17 +159,17 @@ def get_config(config_string="full,language_conditioned"):
     frame_transform_kwargs = dict(
         resize_size={
             "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "secondary": (
-                256,
-                256,
-            ),  # top camera with same res
-            "wrist": (256, 256),
+            # "secondary": (
+            #     256,
+            #     256,
+            # ),  # top camera with same res
+            # "wrist": (256, 256),
         },
-        image_augment_kwargs=[
+        image_augment_kwargs=dict(
             primary=workspace_augment_kwargs,
-            secondary=workspace_augment_kwargs,
-            wrist=wrist_augment_kwargs,
-        ],
+            # secondary=workspace_augment_kwargs,
+            # wrist=wrist_augment_kwargs,
+        ),
     )
     # If the default data loading speed is too slow, try these:
     config["frame_transform_threads"] = (

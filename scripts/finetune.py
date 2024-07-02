@@ -217,7 +217,7 @@ def main(_):
     # Fully override the old action head with a new one (for smaller changes, you can use update_module_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
-        pred_horizon=10,
+        action_horizon=10,
         action_dim=17,
         readout_key="readout_action",
         max_action=120.0,
