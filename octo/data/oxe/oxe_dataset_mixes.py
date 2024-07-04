@@ -169,11 +169,17 @@ MIMIC_MIX = [
     ("faive_dataset", 1.0),
 ]
 
+MIMIC_FLEX_MIX = {
+    ("faive_dataset", 1.0),
+    ("taco_play", 1.0),
+}
+
 OXE_NAMED_MIXES = {
     "bridge": BRIDGE_MIX,
     "rtx": RT_X_MIX,
     "rtx_franka": RT_X_MIX + OXE_FRANKA_MIX,
     "oxe_magic_soup": OXE_MAGIC_SOUP,
     "mimic": MIMIC_MIX,
+    "mimic_flex": MIMIC_FLEX_MIX,
     "oxe_flex_act_soup": OXE_FLEX_ACT_SOUP,
 }

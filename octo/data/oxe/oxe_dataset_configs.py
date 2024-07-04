@@ -43,12 +43,14 @@ class ActionEncoding(IntEnum):
 
 OXE_DATASET_CONFIGS = {
     "faive_dataset": {
-        "image_obs_keys": {"primary": "image", "secondary": "top_image", "wrist": "wrist_image"},
+        "image_obs_keys": {
+            "primary": "image",
+            "secondary": "top_image",
+            "wrist": "wrist_image",
+        },
         "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
-        "state_obs_keys": ["state"],
-        "state_encoding": ProprioEncoding.POS_MIMIC,
+        "proprio_encoding": ProprioEncoding.POS_MIMIC,
         "action_encoding": ActionEncoding.EEF_POS_MIMIC,
-        "absolute_action_mask": [True] * 17,
     },
     "fractal20220817_data": {
         "image_obs_keys": {"primary": "image", "secondary": None, "wrist": None},

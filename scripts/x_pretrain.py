@@ -48,7 +48,7 @@ flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 config_dir = os.path.join(os.path.dirname(__file__), "configs")
 config_flags.DEFINE_config_file(
     "config",
-    os.path.join(config_dir, "octo_default_pretrain_config.py:vit_b"),
+    os.path.join(config_dir, "octo_x_pretrain_config.py:vit_b"),
     "File path to the training hyperparameter configuration.",
     lock_config=False,
 )
@@ -228,6 +228,7 @@ def main(_):
             batch["observation"]["timestep_pad_mask"],
             train=train,
         )
+        action_encodings = batch["action_encoding"]
         action_loss, action_metrics = bound_module.heads["action"].loss(
             transformer_embeddings,  # action head knows to pull out the "action" readout_key
             batch["action"],
@@ -344,3 +345,4 @@ def main(_):
 
 if __name__ == "__main__":
     app.run(main)
+

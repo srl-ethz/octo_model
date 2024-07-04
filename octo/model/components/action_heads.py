@@ -148,7 +148,10 @@ class ContinuousActionHead(nn.Module, ActionHead):
         self.mean_proj = nn.Dense(self.action_horizon * self.action_dim)
 
     def __call__(
-        self, transformer_outputs: Dict[str, TokenGroup], train: bool = True
+        self,
+        transformer_outputs: Dict[str, TokenGroup],
+        action_encodings: Optional[jnp.array] = None,
+        train: bool = True,
     ) -> jax.Array:
         """
         Returns:
@@ -160,8 +163,35 @@ class ContinuousActionHead(nn.Module, ActionHead):
             f"but got shape {token_group.tokens.shape}"
         )
         if self.use_map:  # Multi-head attention pooling
-            embeddings = self.map_head(token_group, train=train)[:, :, 0]
+            # TODO: concatenate the action_encodings to the token_group.tokens
+
+            # create new TokenGroup for action encodings
+            batch_size, window_size, num_tokens = token_group.tokens.shape[:3]
+
+            if action_encodings is not None:
+                # action encodings should be repeated across the window size
+                action_encodings = jnp.tile(
+                    action_encodings, (1, window_size, num_tokens)
+                )
+
+                action_encodings_token_group = TokenGroup(
+                    tokens=action_encodings,
+                    mask=jnp.ones(action_encodings.shape[:-1]),
+                )
+
+                tokens_with_actions = TokenGroup.concatenate(
+                    [token_group, action_encodings_token_group]
+                )
+
+                embeddings = self.map_head(tokens_with_actions, train=train)[:, :, 0]
+            else:
+                embeddings = self.map_head(token_group, train=train)[:, :, 0]
+                logging.warning(
+                    "Not conditioning on action encoding despite using MAP!"
+                )
+
         else:  # mean pooling
+            logging.warning("Not conditioning on action encoding!")
             embeddings = token_group.tokens.mean(axis=-2)
         # Now, embeddings is (batch_size, window_size, embedding_size)
 
@@ -178,6 +208,7 @@ class ContinuousActionHead(nn.Module, ActionHead):
         actions: ArrayLike,
         timestep_pad_mask: ArrayLike,
         action_pad_mask: ArrayLike,
+        action_encodings: Optional[jnp.array] = None,
         train: bool = True,
     ) -> Tuple[Array, Dict[str, Array]]:
         """Computes the loss for the action regression objective.
@@ -194,10 +225,14 @@ class ContinuousActionHead(nn.Module, ActionHead):
             metrics: dict
         """
         # (batch, window_size, action_horizon, action_dim)
-        mean = self(transformer_outputs, train=train)
+        mean = self(transformer_outputs, action_encodings, train=train)
 
         # combine the timestep pad mask with the action pad mask
         mask = timestep_pad_mask[:, :, None, None] & action_pad_mask
+
+        assert (
+            mean.shape == actions.shape
+        ), f"Action shape mismatch: pred {mean.shape} vs gt {actions.shape}"
 
         loss, metrics = continuous_loss(mean, actions, mask, loss_type=self.loss_type)
         # Sum over action dimension instead of averaging

@@ -88,7 +88,7 @@ def make_oxe_dataset_kwargs(
     )
 
     del dataset_kwargs["proprio_encoding"]
-    del dataset_kwargs["action_encoding"]
+    # del dataset_kwargs["action_encoding"]
 
     dataset_kwargs["standardize_fn"] = ModuleSpec.create(
         OXE_STANDARDIZATION_TRANSFORMS[name]
@@ -143,18 +143,18 @@ def make_oxe_dataset_kwargs_and_weights(
     data_kwargs_list, weights = [], []
     for name, weight in data_mix:
         try:
-            data_kwargs_list.append(
-                make_oxe_dataset_kwargs(
-                    name,
-                    data_dir,
-                    load_camera_views,
-                    load_depth,
-                    load_proprio,
-                    load_language,
-                    force_recompute_dataset_statistics,
-                    action_proprio_normalization_type,
-                )
+            dataset_kwargs = make_oxe_dataset_kwargs(
+                name,
+                data_dir,
+                load_camera_views,
+                load_depth,
+                load_proprio,
+                load_language,
+                force_recompute_dataset_statistics,
+                action_proprio_normalization_type,
             )
+
+            data_kwargs_list.append(dataset_kwargs)
             weights.append(weight)
         except ValueError as e:
             logging.warning(f"Skipping {name} due to error: {e}")

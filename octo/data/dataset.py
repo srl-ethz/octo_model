@@ -20,6 +20,7 @@ from octo.data.utils.data_utils import (
     tree_map,
 )
 from octo.utils.spec import ModuleSpec
+from octo.data.oxe.oxe_dataset_configs import ActionEncoding
 
 
 def apply_trajectory_transforms(
@@ -239,6 +240,7 @@ def apply_frame_transforms(
 def make_dataset_from_rlds(
     name: str,
     data_dir: str,
+    action_encoding: ActionEncoding,
     *,
     train: bool,
     standardize_fn: Optional[ModuleSpec] = None,
@@ -321,6 +323,7 @@ def make_dataset_from_rlds(
             - language_instruction      # language instruction, present if `language_key` is provided
         - action                        # action vector
         - dataset_name                  # name of the dataset
+        - action_encoding               # action encoding enum
     """
     REQUIRED_KEYS = {"observation", "action"}
 
@@ -372,6 +375,7 @@ def make_dataset_from_rlds(
             "task": task,
             "action": tf.cast(traj["action"], tf.float32),
             "dataset_name": tf.repeat(name, traj_len),
+            "action_encoding": tf.repeat(action_encoding, traj_len),
         }
 
         return traj
@@ -538,6 +542,8 @@ def make_interleaved_dataset(
     dataset_sizes = []
     all_dataset_statistics = {}
     for dataset_kwargs in dataset_kwargs_list:
+        print(f"Found dataset kwargs: {dataset_kwargs}")
+        print(f'Found action encoding key: {dataset_kwargs.get("action_encoding")}')
         _, dataset_statistics = make_dataset_from_rlds(**dataset_kwargs, train=train)
         dataset_sizes.append(dataset_statistics["num_transitions"])
         assert (
