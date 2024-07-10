@@ -975,6 +975,10 @@ def mujoco_manip_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]
     return trajectory
 
 
+def arctic_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    return trajectory
+
+
 OXE_STANDARDIZATION_TRANSFORMS = {
     "bridge_dataset": bridge_dataset_transform,
     "fractal20220817_data": rt1_dataset_transform,
@@ -1035,4 +1039,5 @@ OXE_STANDARDIZATION_TRANSFORMS = {
     "rh20t": rh20t_dataset_transform,
     "mujoco_manip": mujoco_manip_dataset_transform,
     "faive_dataset": faive_dataset_transform,
+    "arctic_dataset": arctic_dataset_transform,
 }

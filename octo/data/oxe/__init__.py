@@ -54,7 +54,11 @@ def make_oxe_dataset_kwargs(
             [True] * 6 + [False] + [True] * 6 + [False] + [True] * 2
         )
     elif dataset_kwargs["action_encoding"] is ActionEncoding.EEF_POS_MIMIC:
+        # 6-dim absolute pose deltas + 11-dim absolute gripper angles
         dataset_kwargs["action_normalization_mask"] = [True] * 17
+    elif dataset_kwargs["action_encoding"] is ActionEncoding.HUMAN_BIMANUAL_MANO45:
+        # 2 x 6 absolute pose deltas and 2 x 45 absolute mano parameters
+        dataset_kwargs["action_normalization_mask"] = [True] * 102
     else:
         raise ValueError(
             f"Cannot load {name} with unsupported action encoding {dataset_kwargs['action_encoding']}."

@@ -170,8 +170,10 @@ MIMIC_MIX = [
 ]
 
 MIMIC_FLEX_MIX = {
-    ("faive_dataset", 1.0),
-    ("taco_play", 1.0),
+    # include all of OXE_MAGIC_SOUP
+    *OXE_MAGIC_SOUP,
+    ("faive_dataset", 3.0),
+    ("arctic_dataset", 3.0),
 }
 
 OXE_NAMED_MIXES = {

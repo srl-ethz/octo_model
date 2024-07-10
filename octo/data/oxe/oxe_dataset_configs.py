@@ -39,6 +39,7 @@ class ActionEncoding(IntEnum):
         5  # 2 x [6 x joint pos + gripper] + linear base vel + angular base vel
     )
     EEF_POS_MIMIC = 6  # 6 x EEF delta RPY + XYZ + 11-dim absolute gripper
+    HUMAN_BIMANUAL_MANO45 = 7  # 2 x absolute delta pose, 2 x 45dim MANO hand poses
 
 
 OXE_DATASET_CONFIGS = {
@@ -51,6 +52,14 @@ OXE_DATASET_CONFIGS = {
         "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
         "proprio_encoding": ProprioEncoding.POS_MIMIC,
         "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+    },
+    "arctic_dataset": {
+        "image_obs_keys": {
+            "primary": "image",
+        },
+        "depth_obs_keys": {"primary": None},
+        "proprio_encoding": ProprioEncoding.NONE,
+        "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
     },
     "fractal20220817_data": {
         "image_obs_keys": {"primary": "image", "secondary": None, "wrist": None},
