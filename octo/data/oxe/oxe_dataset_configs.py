@@ -42,6 +42,16 @@ class ActionEncoding(IntEnum):
     HUMAN_BIMANUAL_MANO45 = 7  # 2 x absolute delta pose, 2 x 45dim MANO hand poses
 
 
+ACTION_ENCODING_DIMS = {
+    ActionEncoding.EEF_POS: 7,
+    ActionEncoding.JOINT_POS: 8,
+    ActionEncoding.JOINT_POS_BIMANUAL: 14,
+    ActionEncoding.NAV_2D: 2,
+    ActionEncoding.JOINT_POS_BIMANUAL_NAV: 20,
+    ActionEncoding.EEF_POS_MIMIC: 17,
+    ActionEncoding.HUMAN_BIMANUAL_MANO45: 102,
+}
+
 OXE_DATASET_CONFIGS = {
     "faive_dataset": {
         "image_obs_keys": {

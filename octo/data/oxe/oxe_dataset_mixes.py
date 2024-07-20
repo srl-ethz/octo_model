@@ -173,7 +173,7 @@ MIMIC_FLEX_MIX = {
     # include all of OXE_MAGIC_SOUP
     *OXE_MAGIC_SOUP,
     ("faive_dataset", 3.0),
-    ("arctic_dataset", 3.0),
+    # ("arctic_dataset", 3.0),
 }
 
 OXE_NAMED_MIXES = {

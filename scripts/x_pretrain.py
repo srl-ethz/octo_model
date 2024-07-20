@@ -115,7 +115,7 @@ def main(_):
             logging.info("save_dir not passed in, not saving checkpoints")
     else:
         # resume previous run
-        wandb_run = wandb.Api().run(FLAGS.config.wandb_resume_id)
+        wandb_run = wandb.Api().run(os.path.join(FLAGS.config.wandb.entity, FLAGS.config.wandb.project, FLAGS.config.wandb_resume_id))
         if jax.process_index() == 0:
             wandb.init(
                 project=wandb_run.project,
@@ -234,6 +234,7 @@ def main(_):
             batch["action"],
             batch["observation"]["timestep_pad_mask"],
             batch["action_pad_mask"],
+            # action_encodings,
             train=train,
         )
         return action_loss, action_metrics
@@ -278,22 +279,22 @@ def main(_):
         dataset_kwargs=FLAGS.config.dataset_kwargs,
         **FLAGS.config.val_kwargs.to_dict(),
     )
-    viz_callback = VisualizationCallback(
-        text_processor=text_processor,
-        val_dataset_kwargs_list=val_datasets_kwargs_list,
-        dataset_kwargs=FLAGS.config.dataset_kwargs,
-        **FLAGS.config.viz_kwargs.to_dict(),
-    )
-    if "rollout_kwargs" in FLAGS.config:
-        rollout_kwargs = FLAGS.config.rollout_kwargs.to_dict()
-        dataset_name = rollout_kwargs.pop("dataset_name")
-        rollout_callback = RolloutVisualizationCallback(
-            text_processor=text_processor,
-            action_proprio_metadata=train_data.dataset_statistics[dataset_name],
-            **rollout_kwargs,
-        )
-    else:
-        rollout_callback = None
+    # viz_callback = VisualizationCallback(
+    #     text_processor=text_processor,
+    #     val_dataset_kwargs_list=val_datasets_kwargs_list,
+    #     dataset_kwargs=FLAGS.config.dataset_kwargs,
+    #     **FLAGS.config.viz_kwargs.to_dict(),
+    # )
+    # if "rollout_kwargs" in FLAGS.config:
+    #     rollout_kwargs = FLAGS.config.rollout_kwargs.to_dict()
+    #     dataset_name = rollout_kwargs.pop("dataset_name")
+    #     rollout_callback = RolloutVisualizationCallback(
+    #         text_processor=text_processor,
+    #         action_proprio_metadata=train_data.dataset_statistics[dataset_name],
+    #         **rollout_kwargs,
+    #     )
+    # else:
+    rollout_callback = None
 
     def wandb_log(info, step):
         if jax.process_index() == 0:
@@ -323,16 +324,16 @@ def main(_):
                 val_metrics = val_callback(train_state, i + 1)
                 wandb_log(val_metrics, step=i + 1)
 
-        if (i + 1) % FLAGS.config.viz_interval == 0:
-            logging.info("Visualizing...")
-            with timer("visualize"):
-                viz_metrics = viz_callback(train_state, i + 1)
-                wandb_log(viz_metrics, step=i + 1)
-
-            if rollout_callback is not None:
-                with timer("rollout"):
-                    rollout_metrics = rollout_callback(train_state, i + 1)
-                    wandb_log(rollout_metrics, step=i + 1)
+        # if (i + 1) % FLAGS.config.viz_interval == 0:
+        #     logging.info("Visualizing...")
+        #     with timer("visualize"):
+        #         viz_metrics = viz_callback(train_state, i + 1)
+        #         wandb_log(viz_metrics, step=i + 1)
+        #
+        #     if rollout_callback is not None:
+        #         with timer("rollout"):
+        #             rollout_metrics = rollout_callback(train_state, i + 1)
+        #             wandb_log(rollout_metrics, step=i + 1)
 
         timer.tock("total")
         if (i + 1) % FLAGS.config.log_interval == 0:
@@ -345,4 +346,3 @@ def main(_):
 
 if __name__ == "__main__":
     app.run(main)
-

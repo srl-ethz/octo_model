@@ -438,11 +438,19 @@ class OctoModel:
         example_batch = multihost_utils.process_allgather(example_batch)
         example_batch = jax.tree_map(lambda x: x[:1], example_batch)
 
-        init_args = (
-            example_batch["observation"],
-            example_batch["task"],
-            example_batch["observation"]["timestep_pad_mask"],
-        )
+        if "action_encoding" in example_batch:
+            init_args = (
+                example_batch["observation"],
+                example_batch["task"],
+                example_batch["observation"]["timestep_pad_mask"],
+                example_batch["action_encoding"],
+            )
+        else:
+            init_args = (
+                example_batch["observation"],
+                example_batch["task"],
+                example_batch["observation"]["timestep_pad_mask"],
+            )
 
         if verbose:
             print(

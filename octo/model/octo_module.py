@@ -342,7 +342,7 @@ class OctoModule(nn.Module):
     heads: Dict[str, nn.Module]
 
     def __call__(
-        self, observations, tasks, timestep_pad_mask, train=True, verbose=False
+        self, observations, tasks, timestep_pad_mask, action_encoding=None, train=True, verbose=False
     ):
         """Run transformer and the main method for all heads. Useful for init.
 
@@ -364,7 +364,10 @@ class OctoModule(nn.Module):
         )
         head_outputs = {}
         for head_name, head in self.heads.items():
-            head_outputs[head_name] = head(transformer_outputs, train=train)
+            if action_encoding is None:
+                head_outputs[head_name] = head(transformer_outputs, train=train)
+            else:
+                head_outputs[head_name] = head(transformer_outputs, action_encoding, train=train)
         return transformer_outputs, head_outputs
 
     @classmethod
