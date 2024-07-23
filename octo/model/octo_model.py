@@ -175,6 +175,7 @@ class OctoModel:
         self,
         observations: Data,
         tasks: Data,
+        action_encodings: Optional[ArrayLike] = None,
         unnormalization_statistics: Optional[Data] = None,
         normalization_type: NormalizationType = NormalizationType.NORMAL,
         timestep_pad_mask: Optional[ArrayLike] = None,
@@ -204,11 +205,13 @@ class OctoModel:
         transformer_outputs = self.run_transformer(
             observations, tasks, timestep_pad_mask, train=train
         )
+
         action_head: ActionHead = self.module.bind({"params": self.params}).heads[
             "action"
         ]
         action = action_head.predict_action(
             transformer_outputs,
+            action_encodings=action_encodings,
             train=train,
             argmax=argmax,
             sample_shape=sample_shape,

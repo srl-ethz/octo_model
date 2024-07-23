@@ -791,7 +791,7 @@ class GeneralDiffusionActionHead(nn.Module):
     loss_type: str = "mse"
 
     embedding_size: int = 768
-    num_action_encodings: int = 2
+    num_action_encodings: int = 3
     # diffusion-specific config with sane defaults
     time_dim: int = 32
     num_blocks: int = 3
@@ -977,6 +977,7 @@ class GeneralDiffusionActionHead(nn.Module):
         transformer_outputs: Dict[str, TokenGroup],
         rng: PRNGKey,
         train: bool = True,
+        action_encodings: Optional[jnp.array] = None,
         embodiment_action_dim: Optional[int] = None,
         *args,
         sample_shape: tuple = (),
@@ -1010,7 +1011,7 @@ class GeneralDiffusionActionHead(nn.Module):
             input_time = jnp.broadcast_to(time, (*current_x.shape[:-1], 1))
 
             eps_pred = module.apply(
-                variables, transformer_outputs, input_time, current_x, train=train
+                variables, transformer_outputs=transformer_outputs, action_encodings=action_encodings, time=input_time, noisy_actions=current_x, train=train
             )
 
             alpha_1 = 1 / jnp.sqrt(self.alphas[time])

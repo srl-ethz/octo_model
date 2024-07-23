@@ -65,7 +65,7 @@ def get_config(config_string=None):
         readout_key="readout_action",
         use_map=False,
         action_horizon=4,
-        action_dim=17,
+        action_dim=102,
         n_diffusion_samples=1,
         dropout_rate=0.0,
     )
@@ -131,7 +131,7 @@ def get_config(config_string=None):
             ),
             traj_transform_kwargs=dict(
                 action_horizon=4,
-                max_action_dim=17,
+                max_action_dim=102,
                 task_augment_strategy="delete_and_rephrase",
                 task_augment_kwargs=dict(
                     paraphrases_repo="rail-berkeley/OXE_paraphrases",
