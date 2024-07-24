@@ -851,16 +851,24 @@ class GeneralDiffusionActionHead(nn.Module):
         else:  # mean pooling
             embeddings = token_group.tokens.mean(axis=-2)
         # Now, embeddings is (batch_size, window_size, embedding_size)
-        
+
         # cross-attention with embodiment embedding
         if action_encodings is not None:
             # produce one-hot vector of action_encodings
             action_encodings_oh = jax.nn.one_hot(
                 action_encodings, self.num_action_encodings
             )
+            print(f'action_encodings_oh: {action_encodings_oh.shape}')
             embodiment_embeddings = self.embodiment_projection(action_encodings_oh)
+            print(f'projected oh: {embodiment_embeddings.shape}')
+            print(f'window size: {window_size}')
+            embodiment_embeddings = embodiment_embeddings[:, None, :]
             embodiment_embeddings = jnp.tile(embodiment_embeddings, (1, window_size, 1))
+            print(f'tiled oh: {embodiment_embeddings.shape}')
 
+
+            print(f'embodiment_embeddings: {embodiment_embeddings.shape}')
+            print(f'embeddings: {embeddings.shape}')
             # cross-attention layer such that embeddings can attend to embodiment embeddings
             embeddings = self.embodiment_cross_attention(
                 embodiment_embeddings, embeddings
@@ -933,32 +941,9 @@ class GeneralDiffusionActionHead(nn.Module):
         pred_eps = self(
             transformer_outputs, action_encodings=action_encodings, train=train, time=time, noisy_actions=noisy_actions
         )
-        if action_encodings is not None:
-            # look up action encoding dims in ACTION_ENCODING_DIMS and construct mask
-            action_encodings = jnp.array(action_encodings)
-            action_encoding_dims = [ACTION_ENCODING_DIMS[ae] for ae in action_encodings]
-            # masks should be one for all dimensions that are not masked and zero for all the other action dimensions
-            action_loss_pad_mask = jnp.array(
-                [
-                    [
-                        True if i < action_encoding_dims[j] else False
-                        for i in range(self.action_dim)
-                    ]
-                    for j in range(action_encodings.shape[0])
-                ]
-            )
-
-            # this mask now has dims [batch_size, action_dim]
-            # should be [batch_size, window_size, action_horizon, action_dim]
-            action_loss_pad_mask = jnp.tile(
-                action_loss_pad_mask[:, None, None, :],
-                (1, action_pad_mask.shape[1], action_pad_mask.shape[2], 1),
-            )
-
-            action_pad_mask = action_pad_mask & action_loss_pad_mask
-
 
         # combine the timestep pad mask with the action pad mask
+        # the action pad mask already contains which dimensions are considered padding
         mask = timestep_pad_mask[:, :, None, None] & action_pad_mask
         # flatten the mask to match the flat actions
         mask = rearrange(mask, "b w h a -> b w (h a)")

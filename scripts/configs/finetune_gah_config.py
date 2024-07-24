@@ -55,19 +55,19 @@ def get_config(config_string="full,language_conditioned"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(10000)
-    window_size = FieldReference(default=1)
+    max_steps = FieldReference(100000)
+    window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=64,
+        batch_size=128,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
         eval_interval=5000,
-        save_interval=2500,
-        save_dir=placeholder(str),
+        save_interval=5000,
+        save_dir="/data/erbauer/octo_ckpts",
         seed=42,
         wandb=dict(
             project="octo_finetune",
@@ -87,7 +87,7 @@ def get_config(config_string="full,language_conditioned"):
                 name="cosine",
                 init_value=0.0,
                 peak_value=3e-4,
-                warmup_steps=1000,
+                warmup_steps=10000,
                 decay_steps=max_steps,
                 end_value=0.0,
             ),
@@ -122,7 +122,8 @@ def get_config(config_string="full,language_conditioned"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=10,
+        action_horizon=4,
+        max_action_dim=102,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(

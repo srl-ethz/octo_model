@@ -234,7 +234,7 @@ def main(_):
             batch["action"],
             batch["observation"]["timestep_pad_mask"],
             batch["action_pad_mask"],
-            # action_encodings,
+            action_encodings,
             train=train,
         )
         return action_loss, action_metrics

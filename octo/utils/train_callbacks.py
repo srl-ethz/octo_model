@@ -152,6 +152,7 @@ def get_policy_sampled_actions(
     zero_text,
     samples_per_state,
     rng,
+    action_encodings = None,
     unnormalization_statistics=None,
     policy_mode=None,
 ):
@@ -166,6 +167,7 @@ def get_policy_sampled_actions(
         observations,
         tasks,
         unnormalization_statistics=unnormalization_statistics,
+        action_encodings=action_encodings,
         train=False,
         argmax=False,
         sample_shape=(samples_per_state,),

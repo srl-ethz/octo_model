@@ -98,7 +98,8 @@ def run_policy_on_trajectory(policy_fn, traj, *, text_processor=None):
             [len(s.decode("utf-8")) > 0 for s in traj["task"]["language_instruction"]]
         )
 
-    actions = policy_fn(traj["observation"], tasks)
+    action_encodings = traj.get("action_encoding")
+    actions = policy_fn(traj["observation"], tasks, action_encodings)
 
     horizon = jax.tree_util.tree_leaves(traj["observation"])[0].shape[1]
     return {
