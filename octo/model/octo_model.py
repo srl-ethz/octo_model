@@ -326,10 +326,17 @@ class OctoModel:
                 "observation"
             ]["pad_mask"]
 
+        if "action_encoding" not in example_batch:
+            example_batch["action_encoding"] = np.zeros(
+                (len(example_batch), 1)
+            )
+            print("Warning: action_encodings not found in example_batch. Using zeros.")
+
         init_args = (
             example_batch["observation"],
             example_batch["task"],
             example_batch["observation"]["timestep_pad_mask"],
+            example_batch["action_encoding"],
         )
         params_shape = jax.eval_shape(
             partial(module.init, train=False), jax.random.PRNGKey(0), *init_args
