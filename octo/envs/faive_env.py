@@ -104,8 +104,8 @@ class FaiveGym(gym.Env):
         self.log_dict["pred_actions"].append(action)
 
         if self.policy_player_agent.wrist_cmd_type == "delta":
-            self.log_dict["pred_next_proprio"].append(obs["proprio"] - action)
-
+            # self.log_dict["pred_next_proprio"].append(obs["proprio"] - action)
+            ...
         if gt_reference is not None:
             gt_action, gt_next_proprio = gt_reference
             self.log_dict["gt_actions"].append(gt_action["action"])
