@@ -9,7 +9,7 @@ get_base_config = imp.load_source(
 ).get_config
 
 from octo.data.utils.text_processing import HFTokenizer
-from octo.model.components.action_heads import DiffusionActionHead, L1ActionHead, GeneralDiffusionActionHead
+from octo.model.components.action_heads import DiffusionActionHead, L1ActionHead, GeneralDiffusionActionHead, GeneralContinuousActionHead
 from octo.model.components.tokenizers import ImageTokenizer, LanguageTokenizer
 from octo.model.components.vit_encoders import SmallStem16
 from octo.utils.spec import ModuleSpec
@@ -51,24 +51,26 @@ def get_config(config_string=None):
     }
     config["model"]["repeat_task_tokens"] = True
     config["model"]["readouts"] = {"action": 1}
-    # config["model"]["heads"]["action"] = ModuleSpec.create(
-    #     L1ActionHead,
-    #     readout_key="readout_action",
-    #     use_map=True,
-    #     action_horizon=4,
-    #     action_dim=7,
-    # )
-
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        # DiffusionActionHead,
-        GeneralDiffusionActionHead,
+        GeneralContinuousActionHead,
         readout_key="readout_action",
-        use_map=False,
+        use_map=True,
         action_horizon=4,
         action_dim=102,
-        n_diffusion_samples=1,
-        dropout_rate=0.0,
+        loss_type="l1"
+
     )
+
+    # config["model"]["heads"]["action"] = ModuleSpec.create(
+    #     # DiffusionActionHead,
+    #     GeneralDiffusionActionHead,
+    #     readout_key="readout_action",
+    #     use_map=False,
+    #     action_horizon=4,
+    #     action_dim=102,
+    #     n_diffusion_samples=1,
+    #     dropout_rate=0.0,
+    # )
 
     # We augment differently for the primary and wrist cameras
     primary_augment_kwargs = dict(

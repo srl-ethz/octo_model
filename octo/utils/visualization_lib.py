@@ -99,7 +99,7 @@ def run_policy_on_trajectory(policy_fn, traj, *, text_processor=None):
         )
 
     action_encodings = traj.get("action_encoding")
-    actions = policy_fn(traj["observation"], tasks, action_encodings)
+    actions = policy_fn(traj["observation"], tasks, action_encodings=action_encodings)
 
     horizon = jax.tree_util.tree_leaves(traj["observation"])[0].shape[1]
     return {
