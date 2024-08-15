@@ -209,6 +209,7 @@ class OctoModel:
         action_head: ActionHead = self.module.bind({"params": self.params}).heads[
             "action"
         ]
+        
         action = action_head.predict_action(
             transformer_outputs,
             action_encodings=action_encodings,
@@ -431,6 +432,7 @@ class OctoModel:
         verbose: bool = False,
         rng: Optional[PRNGKey] = None,
         dataset_statistics: Optional[Data] = None,
+        condition_on_action: bool = False,
     ):
         """Initializes a model with a fresh set of weights from a given config + example_batch.
 
@@ -448,7 +450,7 @@ class OctoModel:
         example_batch = multihost_utils.process_allgather(example_batch)
         example_batch = jax.tree_map(lambda x: x[:1], example_batch)
 
-        if "action_encoding" in example_batch:
+        if "action_encoding" in example_batch and condition_on_action:
             init_args = (
                 example_batch["observation"],
                 example_batch["task"],
