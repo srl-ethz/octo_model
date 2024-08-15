@@ -556,6 +556,7 @@ def make_interleaved_dataset(
         sample_weights = np.array(sample_weights) * np.array(dataset_sizes)
     sample_weights = np.array(sample_weights) / np.sum(sample_weights)
     pprint_data_mixture(dataset_kwargs_list, sample_weights)
+    pprint_data_mixture(dataset_kwargs_list, dataset_sizes)
 
     # allocate threads based on weights
     threads_per_dataset = allocate_threads(traj_transform_threads, sample_weights)

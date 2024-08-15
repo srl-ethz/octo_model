@@ -32,7 +32,10 @@ def make_oxe_dataset_kwargs(
         force_recompute_dataset_statistics: If True, recompute dataset statistics.
         action_proprio_normalization_type: Normalization type to use for proprioceptive actions.
     """
-    dataset_kwargs = copy.deepcopy(OXE_DATASET_CONFIGS[name])
+    try:
+        dataset_kwargs = copy.deepcopy(OXE_DATASET_CONFIGS[name])
+    except KeyError:
+        raise ValueError(f"Cannot load {name} since it is not available.")
 
     if dataset_kwargs["action_encoding"] is ActionEncoding.EEF_POS:
         # with EEF_POS actions, the last action dimension is gripper

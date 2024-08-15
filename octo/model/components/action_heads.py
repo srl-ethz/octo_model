@@ -153,7 +153,8 @@ class GeneralContinuousActionHead(nn.Module, ActionHead):
         self.embodiment_cross_attention = nn.MultiHeadDotProductAttention(
             8, kernel_init=nn.initializers.xavier_uniform()
         )
-        self.embodiment_ln = nn.LayerNorm()
+        self.embodiment_ln1 = nn.LayerNorm()
+        self.embodiment_ln2 = nn.LayerNorm()
         self.embodiment_mlp_block = MlpBlock(mlp_dim=self.embedding_size)
 
     def __call__(
@@ -191,16 +192,17 @@ class GeneralContinuousActionHead(nn.Module, ActionHead):
                 action_encodings, self.num_action_encodings
             )
             embodiment_embeddings = self.embodiment_projection(action_encodings_oh)
+            embodiment_embeddings = embodiment_embeddings[:, None, :]
             embodiment_embeddings = jnp.tile(embodiment_embeddings, (1, window_size, 1))
-
             # cross-attention layer such that embeddings can attend to embodiment embeddings
             embeddings = self.embodiment_cross_attention(
                 embodiment_embeddings, embeddings
             )
 
             # layer norm and mlp block
-            embeddings = self.embodiment_ln(embeddings)
+            embeddings = self.embodiment_ln1(embeddings)
             embeddings = self.embodiment_mlp_block(embeddings, deterministic=not train)
+            embeddings = self.embodiment_ln2(embeddings)
 
         mean = self.mean_proj(embeddings)
         mean = rearrange(
@@ -234,29 +236,29 @@ class GeneralContinuousActionHead(nn.Module, ActionHead):
         # (batch, window_size, action_horizon, action_dim)
         mean = self(transformer_outputs, action_encodings, train=train)
 
-        if action_encodings is not None:
-            # look up action encoding dims in ACTION_ENCODING_DIMS and construct mask
-            action_encodings = jnp.array(action_encodings)
-            action_encoding_dims = [ACTION_ENCODING_DIMS[ae] for ae in action_encodings]
-            # masks should be one for all dimensions that are not masked and zero for all the other action dimensions
-            action_loss_pad_mask = jnp.array(
-                [
-                    [
-                        1 if i < action_encoding_dims[j] else 0
-                        for i in range(self.action_dim)
-                    ]
-                    for j in range(action_encodings.shape[0])
-                ]
-            )
+        # if action_encodings is not None:
+        #     # look up action encoding dims in ACTION_ENCODING_DIMS and construct mask
+        #     action_encodings = jnp.array(action_encodings)
+        #     action_encoding_dims = [ACTION_ENCODING_DIMS[ae] for ae in action_encodings]
+        #     # masks should be one for all dimensions that are not masked and zero for all the other action dimensions
+        #     action_loss_pad_mask = jnp.array(
+        #         [
+        #             [
+        #                 1 if i < action_encoding_dims[j] else 0
+        #                 for i in range(self.action_dim)
+        #             ]
+        #             for j in range(action_encodings.shape[0])
+        #         ]
+        #     )
 
-            # this mask now has dims [batch_size, action_dim]
-            # should be [batch_size, window_size, action_horizon, action_dim]
-            action_loss_pad_mask = jnp.tile(
-                action_loss_pad_mask[:, None, None, :],
-                (1, action_pad_mask.shape[1], action_pad_mask.shape[2], 1),
-            )
+        #     # this mask now has dims [batch_size, action_dim]
+        #     # should be [batch_size, window_size, action_horizon, action_dim]
+        #     action_loss_pad_mask = jnp.tile(
+        #         action_loss_pad_mask[:, None, None, :],
+        #         (1, action_pad_mask.shape[1], action_pad_mask.shape[2], 1),
+        #     )
 
-            action_pad_mask = action_pad_mask & action_loss_pad_mask
+        #     action_pad_mask = action_pad_mask & action_loss_pad_mask
 
         # combine the timestep pad mask with the action pad mask
         mask = timestep_pad_mask[:, :, None, None] & action_pad_mask

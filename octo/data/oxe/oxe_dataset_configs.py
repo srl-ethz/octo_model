@@ -52,17 +52,23 @@ ACTION_ENCODING_DIMS = {
     ActionEncoding.HUMAN_BIMANUAL_MANO45: 102,
 }
 
-OXE_DATASET_CONFIGS = {
-    "faive_dataset": {
-        "image_obs_keys": {
-            "primary": "image",
-            "secondary": "top_image",
-            "wrist": "wrist_image",
-        },
-        "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
-        "proprio_encoding": ProprioEncoding.POS_MIMIC,
-        "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+FAIVE_CONFIG = {
+    "image_obs_keys": {
+        "primary": "image",
+        "secondary": "top_image",
+        "wrist": "wrist_image",
     },
+    "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
+    "proprio_encoding": ProprioEncoding.POS_MIMIC,
+    "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+}
+
+OXE_DATASET_CONFIGS = {
+    "faive_plush_pick_dataset": FAIVE_CONFIG,
+    "faive_bottle_pick_dataset": FAIVE_CONFIG,
+    "faive_cube_sort_dataset": FAIVE_CONFIG,
+    "faive_pokemon_pick_dataset": FAIVE_CONFIG,
+    "faive_towel_wipe_dataset": FAIVE_CONFIG,
     "arctic_dataset": {
         "image_obs_keys": {
             "primary": "image",
@@ -70,6 +76,22 @@ OXE_DATASET_CONFIGS = {
         "depth_obs_keys": {"primary": None},
         "proprio_encoding": ProprioEncoding.NONE,
         "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
+    },
+    "dexycb_dataset": {
+        "image_obs_keys": {
+            "primary": "image",
+        },
+        "depth_obs_keys": {"primary": None},
+        "proprio_encoding": ProprioEncoding.NONE,
+        "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
+    },
+    "hoi4d_dataset": {
+            "image_obs_keys": {
+                "primary": "image",
+            },
+            "depth_obs_keys": {"primary": None},
+            "proprio_encoding": ProprioEncoding.NONE,
+            "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
     },
     "fractal20220817_data": {
         "image_obs_keys": {"primary": "image", "secondary": None, "wrist": None},

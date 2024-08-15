@@ -975,7 +975,7 @@ def mujoco_manip_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]
     return trajectory
 
 
-def arctic_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+def human_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     return trajectory
 
 
@@ -1039,5 +1039,12 @@ OXE_STANDARDIZATION_TRANSFORMS = {
     "rh20t": rh20t_dataset_transform,
     "mujoco_manip": mujoco_manip_dataset_transform,
     "faive_dataset": faive_dataset_transform,
-    "arctic_dataset": arctic_dataset_transform,
+    "faive_bottle_pick_dataset": faive_dataset_transform,
+    "faive_cube_sort_dataset": faive_dataset_transform,
+    "faive_plush_pick_dataset": faive_dataset_transform,
+    "faive_pokemon_pick_dataset": faive_dataset_transform,
+    "faive_towel_wipe_dataset": faive_dataset_transform,
+    "arctic_dataset": human_dataset_transform,
+    "dexycb_dataset": human_dataset_transform,
+    "hoi4d_dataset": human_dataset_transform,
 }

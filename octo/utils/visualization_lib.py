@@ -1,31 +1,30 @@
-import itertools
-
-import matplotlib
-
-matplotlib.use("Agg")
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
-
-import dlimp as dl
-import flax
-import gym
-import jax
-import jax.numpy as jnp
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
-import numpy as np
-import plotly.graph_objects as go
-import tensorflow as tf
-import tqdm
-import wandb
-
 from octo.utils.gym_wrappers import (
     HistoryWrapper,
     NormalizeProprio,
     RHCWrapper,
     TemporalEnsembleWrapper,
 )
+import wandb
+import tqdm
+import tensorflow as tf
+import plotly.graph_objects as go
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import jax.numpy as jnp
+import jax
+import gym
+import flax
+import dlimp as dl
+from typing import Any, Dict, Optional
+from dataclasses import dataclass
+import itertools
+
+import matplotlib
+
+matplotlib.use("Agg")
+
 
 BASE_METRIC_KEYS = {
     "mse": ("mse", tuple()),  # What is the MSE
@@ -86,7 +85,8 @@ def run_policy_on_trajectory(policy_fn, traj, *, text_processor=None):
     tasks = {}
     tasks.update(
         jax.tree_map(
-            lambda arr: np.tile(arr[-1][-1], (len_traj, *([1] * (arr.ndim - 2)))),
+            lambda arr: np.tile(
+                arr[-1][-1], (len_traj, *([1] * (arr.ndim - 2)))),
             traj["observation"],
         )
     )
@@ -95,12 +95,14 @@ def run_policy_on_trajectory(policy_fn, traj, *, text_processor=None):
             [s.decode("utf-8") for s in traj["task"]["language_instruction"]]
         )
         tasks["pad_mask_dict"]["language_instruction"] = np.array(
-            [len(s.decode("utf-8")) > 0 for s in traj["task"]["language_instruction"]]
+            [len(s.decode("utf-8")) > 0 for s in traj["task"]
+             ["language_instruction"]]
         )
 
     action_encodings = traj.get("action_encoding")
     assert action_encodings is not None, "action_encoding must be provided in the dataset"
-    actions = policy_fn(traj["observation"], tasks, action_encodings=action_encodings)
+    actions = policy_fn(traj["observation"], tasks,
+                        action_encodings=action_encodings)
 
     horizon = jax.tree_util.tree_leaves(traj["observation"])[0].shape[1]
     return {
@@ -222,9 +224,11 @@ class Visualizer:
                     images = traj["observation"][key][:, 0]
 
                     observation_slice = np.concatenate(
-                        images[np.linspace(0, len(images) - 1, 5).astype(int)], 1
+                        images[np.linspace(
+                            0, len(images) - 1, 5).astype(int)], 1
                     )
-                    visualizations[f"traj_{n}_{key}"] = wandb.Image(observation_slice)
+                    visualizations[f"traj_{n}_{key}"] = wandb.Image(
+                        observation_slice)
         self.visualized_trajs = True
         return visualizations
 
@@ -299,7 +303,8 @@ class RolloutVisualizer:
     def __post_init__(self):
         self._env = gym.make(self.env_name, **self.env_kwargs)
         if self.action_proprio_metadata is not None:
-            self._env = NormalizeProprio(self._env, self.action_proprio_metadata)
+            self._env = NormalizeProprio(
+                self._env, self.action_proprio_metadata)
         self._env = HistoryWrapper(
             self._env,
             self.history_length,
@@ -320,7 +325,8 @@ class RolloutVisualizer:
         for rollout_idx in tqdm.tqdm(range(n_rollouts)):
             obs, info = self._env.reset()
             if mode == "text_conditioned":
-                task = state.model.create_tasks(texts=[self._env.get_instruction()])
+                task = state.model.create_tasks(
+                    texts=[self._env.get_instruction()])
             elif mode == "image_conditioned":
                 task = state.model.create_tasks(goals=self._env.get_goal())
             else:
@@ -372,7 +378,8 @@ class RolloutVisualizer:
                 ), f"Expect [height, width, channels] format, got {images[0].shape}"
                 if mode == "image_conditioned":
                     images = [
-                        np.concatenate([task["image_primary"][0], frame], axis=0)
+                        np.concatenate(
+                            [task["image_primary"][0], frame], axis=0)
                         for frame in images
                     ]
                 rollout_info[f"rollout_{rollout_idx}_vid"] = wandb.Video(
@@ -400,7 +407,8 @@ def unnormalize(arr, mean, std, mask=None, **kwargs):
         mask = np.ones_like(mean)
     adim = mean.shape[0]
     trunc_arr = arr[..., :adim]
-    unnorm_arr = np.where(mask, trunc_arr * np.array(std) + np.array(mean), trunc_arr)
+    unnorm_arr = np.where(
+        mask, trunc_arr * np.array(std) + np.array(mean), trunc_arr)
     return np.concatenate([unnorm_arr, arr[..., adim:]], axis=-1)
 
 
@@ -496,7 +504,8 @@ def plot_trajectory_actions(
 
     last_plotted = 0
     for i in range(len(actions) - 1):
-        visible = np.linalg.norm((proprio[i] - proprio[last_plotted])[:3]) > 0.05
+        visible = np.linalg.norm(
+            (proprio[i] - proprio[last_plotted])[:3]) > 0.05
         visible = visible or (i == 0)
         if visible:
             last_plotted = i
@@ -531,7 +540,8 @@ def plot_trajectory_actions(
                     xanchor="left",
                     opacity=0.7,
                 ),
-                dict(x=proprio[-1, 0], y=proprio[-1, 1], z=proprio[-1, 2], text="goal"),
+                dict(x=proprio[-1, 0], y=proprio[-1, 1],
+                     z=proprio[-1, 2], text="goal"),
             ]
         )
     )
@@ -549,7 +559,8 @@ class WandBFigure:
     def __exit__(self, exc_type, exc_value, traceback):
         self.canvas.draw()
         out_image = np.frombuffer(self.canvas.tostring_rgb(), dtype="uint8")
-        self.image = out_image.reshape(self.fig.canvas.get_width_height()[::-1] + (3,))
+        self.image = out_image.reshape(
+            self.fig.canvas.get_width_height()[::-1] + (3,))
         plt.close(self.fig)
 
 
@@ -692,7 +703,8 @@ def _gripping_early_metrics(
     gripped_i_steps_early = {
         i: jnp.logical_and(
             first_grip,
-            jnp.roll(pred_gripper_closed, i, axis=0),  # Predicted a grip i steps early
+            # Predicted a grip i steps early
+            jnp.roll(pred_gripper_closed, i, axis=0),
         )
         for i in range(1, 5)
     }
@@ -705,7 +717,8 @@ def _gripping_early_metrics(
         )
         for i in range(1, 5)
     }  # also check that the z position increased
-    early_gripped_height_aware = sum(gripped_i_steps_early_height_aware.values()) > 0
+    early_gripped_height_aware = sum(
+        gripped_i_steps_early_height_aware.values()) > 0
 
     height_to_grip = jnp.zeros_like(z_position)
     timestep_to_grip = jnp.zeros_like(z_position)
@@ -754,19 +767,23 @@ def _gripper_info(**kwargs):
     future_actions = jnp.roll(actions, -3, axis=0)
     gripping = jnp.logical_or(
         jnp.logical_and(
-            _gripper_closed(actions), jnp.logical_not(_gripper_closed(past_actions))
+            _gripper_closed(actions), jnp.logical_not(
+                _gripper_closed(past_actions))
         ),  # Gripper was open in the past, but is closed now
         jnp.logical_and(
-            _gripper_closed(future_actions), jnp.logical_not(_gripper_closed(actions))
+            _gripper_closed(future_actions), jnp.logical_not(
+                _gripper_closed(actions))
         ),  # Gripper is open now, but will be closed in the future
     )
 
     releasing = jnp.logical_or(
         jnp.logical_and(
-            _gripper_closed(past_actions), jnp.logical_not(_gripper_closed(actions))
+            _gripper_closed(past_actions), jnp.logical_not(
+                _gripper_closed(actions))
         ),  # Gripper was closed in the past, but is open now
         jnp.logical_and(
-            _gripper_closed(actions), jnp.logical_not(_gripper_closed(future_actions))
+            _gripper_closed(actions), jnp.logical_not(
+                _gripper_closed(future_actions))
         ),  # Gripper is closed now, but will be open in the future
     )
 
@@ -787,5 +804,6 @@ def _condition_info(**kwargs):
     return {
         "<10_to_end": distance < 10,
         ">20_to_end": distance > 20,
-        "moving": _moving(**kwargs, magnitude=0.01),  # Moved at least 1cm (hard-coded)
+        # Moved at least 1cm (hard-coded)
+        "moving": _moving(**kwargs, magnitude=0.01),
     }
