@@ -287,6 +287,182 @@ class GeneralContinuousActionHead(nn.Module, ActionHead):
         mean = self(transformer_outputs, train=train)[:, -1]
         return jnp.broadcast_to(mean, sample_shape + mean.shape)
 
+class CrossAttentionTransformerLayer(nn.Module):
+    """
+    A transformer layer that uses cross-attention to combine ViT embeddings with embodiment embeddings.
+    """
+    embedding_size: int = 768
+    num_heads: int = 8
+    dropout_rate = 0.1
+
+    def setup(self):
+        self.cross_attention = nn.MultiHeadDotProductAttention(self.num_heads, kernel_init=nn.initializers.xavier_uniform())
+        self.ln1 = nn.LayerNorm(self.embedding_size)
+        self.mlp_block = MlpBlock(self.embedding_size)
+        self.ln2 = nn.LayerNorm(self.embedding_size)
+
+    def __call__(self, embeddings: jnp.array, embodiment_embeddings: jnp.array, train: bool = True) -> jnp.array:
+        """
+        embeddings: shape (batch_size, window_size, embedding_size)
+        embodiment_embeddings: shape (batch_size, window_size, embedding_size)
+        """
+        attn_output = self.cross_attention(
+            embodiment_embeddings,
+            embeddings,
+            mask=None,
+            deterministic=not train,
+        )
+
+        # first residual connection
+        embeddings = self.ln1(embeddings + attn_output)
+
+        # mlp block
+        mlp_output = self.mlp_block(embeddings, deterministic=not train)
+
+        # second residual connection
+        embeddings = self.ln2(embeddings + mlp_output)
+
+        return embeddings
+
+class GeneralContinuousCrossActionHead(nn.Module, ActionHead):
+    """Predicts continuous actions (as opposed to discretized).
+
+    Continuous actions are predicted by tanh squashing the model output to [-max_action, max_action], and then
+    optimized using a standard regression loss.
+
+    You may create an embedding by either mean-pooling across tokens (use_map=False) or using multi-head
+    attention pooling (use_map=True). It is recommended to use MAP when decoding from the observation token
+    stream.
+    """
+
+    readout_key: str
+    use_map: bool = True
+    action_horizon: int = 1
+    action_dim: int = 102
+    max_action: float = 5.0
+    loss_type: str = "l1"
+    embedding_size: int = 768
+    num_action_encodings: int = 4
+    num_transformer_layers: int = 2
+
+    def setup(self):
+        if self.use_map:
+            self.map_head = MAPHead()
+        self.mean_proj = nn.Dense(self.action_horizon * self.action_dim)
+        self.embodiment_projection = nn.Dense(self.embedding_size)
+
+        self.cross_attention_layers = [
+            CrossAttentionTransformerLayer(embedding_size=self.embedding_size)
+            for _ in range(self.num_transformer_layers)
+        ]
+        self.cross_attention_lns = [
+            nn.LayerNorm(self.embedding_size)
+            for _ in range(self.num_transformer_layers)
+        ]
+
+    def __call__(
+        self,
+        transformer_outputs: Dict[str, TokenGroup],
+        action_encodings: Optional[jnp.array],
+        train: bool = True,
+    ) -> jax.Array:
+        """
+        Returns:
+            mean: Predicted actions w/ shape (batch_size, window_size, action_horizon, action_dim)
+        """
+        token_group = transformer_outputs[self.readout_key]
+        assert token_group.tokens.ndim == 4, (
+            f"Expected token_group.tokens to have shape (batch_size, window_size, num_tokens, embedding_size), "
+            f"but got shape {token_group.tokens.shape}"
+        )
+
+        batch_size, window_size, num_tokens = token_group.tokens.shape[:3]
+        embedding_size = token_group.tokens.shape[-1]
+
+        assert (
+            self.embedding_size == embedding_size
+        ), f"Expected embedding size {self.embedding_size} but got {embedding_size}"
+
+        if self.use_map:  # Multi-head attention pooling
+            embeddings = self.map_head(token_group, train=train)[:, :, 0]
+        else:  # mean pooling
+            embeddings = token_group.tokens.mean(axis=-2)
+        # Now, embeddings is (batch_size, window_size, embedding_size)
+
+        # produce one-hot vector of action_encodings
+        action_encodings_oh = jax.nn.one_hot(
+            action_encodings, self.num_action_encodings
+        )
+
+        # project action_encodings to the same dimension as embeddings
+        embodiment_embeddings = self.embodiment_projection(action_encodings_oh)
+        embodiment_embeddings = embodiment_embeddings[:, None, :]
+        embodiment_embeddings = jnp.tile(embodiment_embeddings, (1, window_size, 1))
+
+        # cross-attention layer such that embeddings can attend to embodiment embeddings
+        for layer, layer_norm in zip(self.cross_attention_layers, self.cross_attention_lns):
+            layer_out = layer(embeddings, embodiment_embeddings, train=train)
+            embeddings = layer_norm(embeddings + layer_out)
+
+        mean = self.mean_proj(embeddings)
+        mean = rearrange(
+            mean, "b w (h a) -> b w h a", h=self.action_horizon, a=self.action_dim
+        )
+        mean = jnp.tanh(mean / self.max_action) * self.max_action
+        return mean
+
+    def loss(
+        self,
+        transformer_outputs: Dict[str, TokenGroup],
+        actions: ArrayLike,
+        timestep_pad_mask: ArrayLike,
+        action_pad_mask: ArrayLike,
+        action_encodings: Optional[jnp.array],
+        train: bool = True,
+    ) -> Tuple[Array, Dict[str, Array]]:
+        """Computes the loss for the action regression objective.
+
+        Args:
+            transformer_ouputs: must contain self.readout_key with shape (batch_size, window_size, num_tokens,
+                embedding_size)
+            actions: shape (batch_size, window_size, action_horizon, action_dim)
+            timestep_pad_mask: boolean array (batch, window_size) which is True if the timestep is not a padding timestep
+            action_pad_mask: boolean array (same shape as actions) which is True if the action dimension is not a padding dimension
+
+        Returns:
+            loss: float
+            metrics: dict
+        """
+        # (batch, window_size, action_horizon, action_dim)
+        mean = self(transformer_outputs, action_encodings, train=train)
+
+        # combine the timestep pad mask with the action pad mask
+        mask = timestep_pad_mask[:, :, None, None] & action_pad_mask
+
+        assert (
+            mean.shape == actions.shape
+        ), f"Action shape mismatch: pred {mean.shape} vs gt {actions.shape}"
+
+        loss, metrics = continuous_loss(mean, actions, mask, loss_type=self.loss_type)
+        # Sum over action dimension instead of averaging
+        loss = loss * self.action_dim
+        metrics["loss"] = metrics["loss"] * self.action_dim
+        metrics["mse"] = metrics["mse"] * self.action_dim
+        return loss, metrics
+
+    def predict_action(
+        self,
+        transformer_outputs: Dict[str, TokenGroup],
+        action_encodings: jnp.array,
+        train: bool = True,
+        *args,
+        sample_shape: tuple = (),
+        **kwargs,
+    ) -> jax.Array:
+        """Convenience methods for predicting actions for the final timestep in the window."""
+        # only get the last timestep in the window
+        mean = self(transformer_outputs, action_encodings, train=train)[:, -1]
+        return jnp.broadcast_to(mean, sample_shape + mean.shape)
 
 class ContinuousActionHead(nn.Module, ActionHead):
     """Predicts continuous actions (as opposed to discretized).
