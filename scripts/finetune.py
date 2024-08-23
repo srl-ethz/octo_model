@@ -195,7 +195,7 @@ def main(_):
     ######################
 
     config = pretrained_model.config
-    del config["model"]["observation_tokenizers"]["wrist"]
+    # del config["model"]["observation_tokenizers"]["wrist"]
     ###
     # config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
     #     LowdimObsTokenizer,

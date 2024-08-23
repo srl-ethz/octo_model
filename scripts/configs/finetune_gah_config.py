@@ -17,7 +17,7 @@ def get_config(config_string="full,language_conditioned"):
 
     FINETUNING_KWARGS = {
         "name": "faive_dataset",
-        "data_dir": "/home/erbauer/tensorflow_datasets/",
+        "data_dir": "/media/enava/One Touch/SRL/eb-x-embodiment/data",
         "image_obs_keys": {
             "primary": "image",
             # "secondary": "top_image",
@@ -61,11 +61,11 @@ def get_config(config_string="full,language_conditioned"):
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=128,
+        batch_size=8,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
-        eval_interval=5000,
+        eval_interval=2500,
         save_interval=5000,
         save_dir="/data/erbauer/octo_ckpts",
         seed=42,
@@ -101,7 +101,7 @@ def get_config(config_string="full,language_conditioned"):
             num_val_batches=8,
         ),
         viz_kwargs=dict(
-            eval_batch_size=128,
+            eval_batch_size=8,
             trajs_for_metrics=100,
             trajs_for_viz=8,
             samples_per_state=8,
