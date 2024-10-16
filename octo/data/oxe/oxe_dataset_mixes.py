@@ -173,20 +173,32 @@ MIMIC_MIX = [
     ("faive_towel_wipe_dataset", 3.0),
 ]
 
-FAIVE_WEIGHT = 15
+FAIVE_WEIGHT = 10
 HUMAN_WEIGHT = 3
 MIMIC_FLEX_MIX = {
     # include all of OXE_MAGIC_SOUP
-    *OXE_MAGIC_SOUP,
+    # *OXE_MAGIC_SOUP,
+    ("bridge_dataset", 2.0),
     ("faive_bottle_pick_dataset", FAIVE_WEIGHT),
     ("faive_cube_sort_dataset", FAIVE_WEIGHT),
     ("faive_plush_pick_dataset", FAIVE_WEIGHT),
     ("faive_pokemon_pick_dataset", FAIVE_WEIGHT),
     ("faive_towel_wipe_dataset", FAIVE_WEIGHT),
-    ("arctic_dataset", HUMAN_WEIGHT),
-    ("dexycb_dataset", HUMAN_WEIGHT),
-    ("hoi4d_dataset", HUMAN_WEIGHT)
+    ("arctic_dataset", 6.0),
+    # ("arctic_dataset", HUMAN_WEIGHT),
+    # ("dexycb_dataset", HUMAN_WEIGHT),
+    # ("hoi4d_dataset", HUMAN_WEIGHT)
 }
+
+OXE_LATENT_MIX = [
+    ("bridge_dataset", 1.0),
+    ("dexycb_dataset", 8.0),
+    ("faive_bottle_pick_dataset", FAIVE_WEIGHT),
+    ("faive_cube_sort_dataset", FAIVE_WEIGHT),
+    ("faive_plush_pick_dataset", FAIVE_WEIGHT),
+    ("faive_pokemon_pick_dataset", FAIVE_WEIGHT),
+    ("faive_towel_wipe_dataset", FAIVE_WEIGHT),
+]
 
 OXE_NAMED_MIXES = {
     "bridge": BRIDGE_MIX,
@@ -196,4 +208,5 @@ OXE_NAMED_MIXES = {
     "mimic": MIMIC_MIX,
     "mimic_flex": MIMIC_FLEX_MIX,
     "oxe_flex_act_soup": OXE_FLEX_ACT_SOUP,
+    "oxe_latent": OXE_LATENT_MIX,
 }

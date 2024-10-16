@@ -9,7 +9,7 @@ get_base_config = imp.load_source(
 ).get_config
 
 from octo.data.utils.text_processing import HFTokenizer
-from octo.model.components.action_heads import DiffusionActionHead, L1ActionHead, GeneralDiffusionActionHead, GeneralContinuousActionHead, GeneralContinuousCrossActionHead
+from octo.model.components.action_heads import L1ActionHead 
 from octo.model.components.tokenizers import ImageTokenizer, LanguageTokenizer
 from octo.model.components.vit_encoders import SmallStem16
 from octo.utils.spec import ModuleSpec
@@ -26,7 +26,7 @@ def update_config(config, **kwargs):
 def get_config(config_string=None):
     config = get_base_config(config_string)
 
-    action_dim = FieldReference(7)
+    action_dim = FieldReference(70)
 
     config["model"]["observation_tokenizers"] = {
         "primary": ModuleSpec.create(
@@ -35,12 +35,12 @@ def get_config(config_string=None):
             task_stack_keys=["image_primary"],
             encoder=ModuleSpec.create(SmallStem16),
         ),
-        "wrist": ModuleSpec.create(
-            ImageTokenizer,
-            obs_stack_keys=["image_wrist"],
-            task_stack_keys=["image_wrist"],
-            encoder=ModuleSpec.create(SmallStem16),
-        ),
+        # "wrist": ModuleSpec.create(
+        #     ImageTokenizer,
+        #     obs_stack_keys=["image_wrist"],
+        #     task_stack_keys=["image_wrist"],
+        #     encoder=ModuleSpec.create(SmallStem16),
+        # ),
     }
     config["model"]["task_tokenizers"] = {
         "language": ModuleSpec.create(
@@ -52,14 +52,14 @@ def get_config(config_string=None):
     config["model"]["repeat_task_tokens"] = True
     config["model"]["readouts"] = {"action": 1}
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        GeneralContinuousCrossActionHead,
+        L1ActionHead,
         # GeneralContinuousActionHead,
         readout_key="readout_action",
         use_map=True,
         action_horizon=4,
-        action_dim=102,
-        loss_type="l1",
-        num_action_encodings=4,
+        action_dim=70,
+        # loss_type="l1",
+        # num_action_encodings=4,
 
     )
 
@@ -110,17 +110,17 @@ def get_config(config_string=None):
 
     config["dataset_kwargs"]["frame_transform_kwargs"]["resize_size"] = {
         "primary": (256, 256),  # workspace camera is at 256x256
-        "wrist": (128, 128),  # wrist camera is at 128x128
+        # "wrist": (128, 128),  # wrist camera is at 128x128
     }
     config["dataset_kwargs"]["frame_transform_kwargs"]["image_augment_kwargs"] = {
         "primary": primary_augment_kwargs,
-        "wrist": wrist_augment_kwargs,
+        # "wrist": wrist_augment_kwargs,
     }
 
     config = update_config(
         config,
-        num_steps=500000,
-        window_size=2,
+        num_steps=300000,
+        window_size=1,
         optimizer=dict(
             learning_rate=dict(
                 name="rsqrt",
@@ -135,21 +135,21 @@ def get_config(config_string=None):
         ),
         dataset_kwargs=dict(
             oxe_kwargs=dict(
-                data_mix="mimic_flex",
-                data_dir="/data/erbauer/oxe_dataset/downloads/",
+                data_mix="oxe_latent",
+                data_dir="/mnt/data1/erbauer/oxe_latents/converted/",
                 load_camera_views=("primary",),
                 load_depth=False,
                 force_recompute_dataset_statistics=False,
             ),
             traj_transform_kwargs=dict(
                 action_horizon=4,
-                max_action_dim=102,
-                task_augment_strategy="delete_and_rephrase",
-                task_augment_kwargs=dict(
-                    paraphrases_repo="rail-berkeley/OXE_paraphrases",
-                    paraphrases_filename="paraphrases_oxe.pkl",
-                    rephrase_prob=0.5,
-                ),
+                max_action_dim=70,
+                # task_augment_strategy="delete_and_rephrase",
+                # task_augment_kwargs=dict(
+                #     paraphrases_repo="rail-berkeley/OXE_paraphrases",
+                #     paraphrases_filename="paraphrases_oxe.pkl",
+                #     rephrase_prob=0.5,
+                # ),
             ),
             batch_size=128,
             shuffle_buffer_size=10000,
@@ -174,14 +174,15 @@ def get_config(config_string=None):
         ),
         wandb=dict(
             project="octo_finetune",
-            group="octo_train",
+            group="octo_latent_train",
             job_type="train",
             tags=[
                 "train",
+                "latent"
             ],
             entity="srl_ethz",
         ),
-        eval_datasets=["faive_plush_pick_dataset", "arctic_dataset", "bridge_dataset"],
+        eval_datasets=["faive_plush_pick_dataset", "dexycb_dataset", "bridge_dataset"],
     )
 
     return config

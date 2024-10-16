@@ -16,8 +16,8 @@ def get_config(config_string="full,language_conditioned"):
     # and second image key should be the wrist view (None if not used)
 
     FINETUNING_KWARGS = {
-        "name": "faive_dataset",
-        "data_dir": "/media/enava/One Touch/SRL/eb-x-embodiment/data",
+        "name": "faive_plush_pick_dataset",
+        "data_dir": "/data/erbauer/oxe_dataset/downloads",
         "image_obs_keys": {
             "primary": "image",
             # "secondary": "top_image",
@@ -55,13 +55,13 @@ def get_config(config_string="full,language_conditioned"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(100000)
+    max_steps = FieldReference(10000)
     window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=8,
+        batch_size=128,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
@@ -86,8 +86,8 @@ def get_config(config_string="full,language_conditioned"):
             learning_rate=dict(
                 name="cosine",
                 init_value=0.0,
-                peak_value=3e-4,
-                warmup_steps=10000,
+                peak_value=3e-5,
+                warmup_steps=1000,
                 decay_steps=max_steps,
                 end_value=0.0,
             ),

@@ -18,7 +18,7 @@ def get_config(
         dict(
             seed=42,
             num_steps=2e6,
-            save_dir="/data/erbauer/octo_ckpts/pretraining/",
+            save_dir="/mnt/data/erbauer/octo_ckpts/pretraining/",
             model=get_model_config(transformer_size),
             window_size=window_size,
             dataset_kwargs=get_dataset_config(window_size),

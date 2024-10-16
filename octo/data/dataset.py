@@ -20,7 +20,7 @@ from octo.data.utils.data_utils import (
     tree_map,
 )
 from octo.utils.spec import ModuleSpec
-from octo.data.oxe.oxe_dataset_configs import ActionEncoding
+from octo.data.oxe.oxe_dataset_configs import ActionEncoding, ACTION_ENCODING_DIMS
 
 
 def apply_trajectory_transforms(
@@ -324,6 +324,7 @@ def make_dataset_from_rlds(
         - action                        # action vector
         - dataset_name                  # name of the dataset
         - action_encoding               # action encoding enum
+        - action_dim                    # dimension of the action
     """
     REQUIRED_KEYS = {"observation", "action"}
 
@@ -376,6 +377,7 @@ def make_dataset_from_rlds(
             "action": tf.cast(traj["action"], tf.float32),
             "dataset_name": tf.repeat(name, traj_len),
             "action_encoding": tf.repeat(action_encoding, traj_len),
+            "action_dim": tf.repeat(ACTION_ENCODING_DIMS[action_encoding], traj_len),
         }
 
         return traj

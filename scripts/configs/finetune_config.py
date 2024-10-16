@@ -16,8 +16,9 @@ def get_config(config_string="full,language_conditioned"):
     # and second image key should be the wrist view (None if not used)
 
     FINETUNING_KWARGS = {
-        "name": "faive_dataset",
-        "data_dir": "/media/enava/One Touch/SRL/eb-x-embodiment/data",
+        "name": "faive_plush_pick_dataset",
+        # "data_dir": "/media/enava/One Touch/SRL/eb-x-embodiment/data",
+        "data_dir": "/data/erbauer/oxe_dataset/downloads",
         "image_obs_keys": {
             "primary": "image",
             # "secondary": "top_image",

@@ -259,6 +259,7 @@ def main(_):
         rng=init_rng,
         dataset_statistics=dataset.dataset_statistics,
         verbose=True,
+        condition_on_action=True
     )
     merged_params = merge_params(model.params, pretrained_model.params)
     model = model.replace(params=merged_params)
@@ -468,9 +469,9 @@ def main(_):
                 val_metrics = val_callback(train_state, i + 1)
                 wandb_log(val_metrics, step=i)
 
-            with timer("visualize"):
-                viz_metrics = viz_callback(train_state, i + 1)
-                wandb_log(viz_metrics, step=i)
+            # with timer("visualize"):
+            #     viz_metrics = viz_callback(train_state, i + 1)
+            #     wandb_log(viz_metrics, step=i)
 
             if rollout_callback is not None:
                 with timer("rollout"):

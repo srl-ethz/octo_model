@@ -40,6 +40,7 @@ class ActionEncoding(IntEnum):
     )
     EEF_POS_MIMIC = 6  # 6 x EEF delta RPY + XYZ + 11-dim absolute gripper
     HUMAN_BIMANUAL_MANO45 = 7  # 2 x absolute delta pose, 2 x 45dim MANO hand poses
+    LATENT = 8  # 70-dim latent
 
 
 ACTION_ENCODING_DIMS = {
@@ -50,6 +51,7 @@ ACTION_ENCODING_DIMS = {
     ActionEncoding.JOINT_POS_BIMANUAL_NAV: 20,
     ActionEncoding.EEF_POS_MIMIC: 17,
     ActionEncoding.HUMAN_BIMANUAL_MANO45: 102,
+    ActionEncoding.LATENT: 70,
 }
 
 FAIVE_CONFIG = {
@@ -60,7 +62,8 @@ FAIVE_CONFIG = {
     },
     "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
     "proprio_encoding": ProprioEncoding.POS_MIMIC,
-    "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+    # "action_encoding": ActionEncoding.EEF_POS_MIMIC,
+    "action_encoding": ActionEncoding.LATENT,
 }
 
 OXE_DATASET_CONFIGS = {
@@ -83,7 +86,8 @@ OXE_DATASET_CONFIGS = {
         },
         "depth_obs_keys": {"primary": None},
         "proprio_encoding": ProprioEncoding.NONE,
-        "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
+        # "action_encoding": ActionEncoding.HUMAN_BIMANUAL_MANO45,
+        "action_encoding": ActionEncoding.LATENT,
     },
     "hoi4d_dataset": {
             "image_obs_keys": {
@@ -111,7 +115,8 @@ OXE_DATASET_CONFIGS = {
         "image_obs_keys": {"primary": "image_0", "secondary": "image_1", "wrist": None},
         "depth_obs_keys": {"primary": None, "secondary": None, "wrist": None},
         "proprio_encoding": ProprioEncoding.POS_EULER,
-        "action_encoding": ActionEncoding.EEF_POS,
+        # "action_encoding": ActionEncoding.EEF_POS,
+        "action_encoding": ActionEncoding.LATENT,
     },
     "taco_play": {
         "image_obs_keys": {

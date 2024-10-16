@@ -55,15 +55,32 @@ class ActionHead(ABC):
         raise NotImplementedError
 
 
-def masked_mean(x, mask):
+def masked_mean(x, mask, action_dims=None):
+    '''
+    Note on the normalization:
+
+    jnp.mean(x * mask) gives us the sum of valid elements divided by total elements.
+    jnp.mean(mask) gives us the fraction of unmasked elements.
+    Dividing these gives us: (sum of valid elements / total elements) / (unmasked elements / total elements) = sum of valid elements / number of unmasked elements
+
+    '''
     mask = jnp.broadcast_to(mask, x.shape)
-    return jnp.mean(x * mask) / jnp.clip(jnp.mean(mask), a_min=1e-5, a_max=None)
+    if action_dims is None:
+        return jnp.mean(x * mask) / jnp.clip(jnp.mean(mask), a_min=1e-5, a_max=None)
+    else:
+        # broadcast action_dims to match the shape of x
+        action_dims = jnp.broadcast_to(action_dims, x.shape[:-1])
+        # divide by action_dims to get the adjusted mean to account for different action dimensions
+        dim_normalized_x = x / action_dims
+        return jnp.mean(dim_normalized_x * mask)
+
 
 
 def continuous_loss(
     pred_value: ArrayLike,
     ground_truth_value: ArrayLike,
     mask: ArrayLike,
+    action_dims: Optional[ArrayLike] = None,
     loss_type: str = "mse",
 ) -> Array:
     """
@@ -82,7 +99,9 @@ def continuous_loss(
     loss = masked_mean(loss, mask)
 
     mse = jnp.square(pred_value - ground_truth_value)
-    mse = masked_mean(mse, mask)
+
+    # if action_dims is not None, we need to adjust the mse to account for different action dimensions
+    mse = masked_mean(mse, mask, action_dims)
     return loss, {
         "loss": loss,
         "mse": mse,
@@ -341,7 +360,7 @@ class GeneralContinuousCrossActionHead(nn.Module, ActionHead):
     action_dim: int = 102
     max_action: float = 5.0
     loss_type: str = "l1"
-    embedding_size: int = 768
+    embedding_size: int = 384
     num_action_encodings: int = 4
     num_transformer_layers: int = 2
 
@@ -418,6 +437,7 @@ class GeneralContinuousCrossActionHead(nn.Module, ActionHead):
         timestep_pad_mask: ArrayLike,
         action_pad_mask: ArrayLike,
         action_encodings: Optional[jnp.array],
+        # action_dims: Optional[jnp.array],
         train: bool = True,
     ) -> Tuple[Array, Dict[str, Array]]:
         """Computes the loss for the action regression objective.
@@ -428,7 +448,7 @@ class GeneralContinuousCrossActionHead(nn.Module, ActionHead):
             actions: shape (batch_size, window_size, action_horizon, action_dim)
             timestep_pad_mask: boolean array (batch, window_size) which is True if the timestep is not a padding timestep
             action_pad_mask: boolean array (same shape as actions) which is True if the action dimension is not a padding dimension
-
+            action_dims: array (batch_size, window_size, action_horizon, action_dim) containing the dimension of each action
         Returns:
             loss: float
             metrics: dict

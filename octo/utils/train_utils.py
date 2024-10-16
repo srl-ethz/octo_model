@@ -205,6 +205,7 @@ def create_lr_schedule(name: str, **kwargs):
         **kwargs: additional kwargs, which vary by schedule
     """
     if name == "cosine":
+        print(f'cosine schedule kwargs {kwargs}')
         return optax.warmup_cosine_decay_schedule(**kwargs)
     elif name == "rsqrt":
         timescale = kwargs.get("timescale", 10000)

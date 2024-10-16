@@ -48,7 +48,7 @@ flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 config_dir = os.path.join(os.path.dirname(__file__), "configs")
 config_flags.DEFINE_config_file(
     "config",
-    os.path.join(config_dir, "octo_x_pretrain_config.py:vit_s"),
+    os.path.join(config_dir, "octo_latent_pretrain_config.py:vit_s"),
     "File path to the training hyperparameter configuration.",
     lock_config=False,
 )
@@ -183,7 +183,7 @@ def main(_):
         verbose=True,
         rng=init_rng,
         dataset_statistics=train_data.dataset_statistics,
-        condition_on_action=True,
+        condition_on_action=False,
     )
 
     # create optimizer
@@ -229,14 +229,14 @@ def main(_):
             batch["observation"]["timestep_pad_mask"],
             train=train,
         )
-        action_encodings = batch["action_encoding"]
-        action_dims = batch["action_dim"]
+        # action_encodings = batch["action_encoding"]
+        # action_dims = batch["action_dim"]
         action_loss, action_metrics = bound_module.heads["action"].loss(
             transformer_embeddings,  # action head knows to pull out the "action" readout_key
             batch["action"],
             batch["observation"]["timestep_pad_mask"],
             batch["action_pad_mask"],
-            action_encodings,
+            # batch["action_encoding"],
             # action_dims,
             train=train,
         )
