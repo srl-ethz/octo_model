@@ -260,6 +260,7 @@ class OctoModel:
         cls,
         checkpoint_path: str,
         step: Optional[int] = None,
+        condition_on_action: bool = False,
     ) -> "OctoModel":
         """Loads a model from a checkpoint that was saved via `save_pretrained`.
 
@@ -327,18 +328,26 @@ class OctoModel:
                 "observation"
             ]["pad_mask"]
 
-        if "action_encoding" not in example_batch:
+        if "action_encoding" not in example_batch and not condition_on_action:
             example_batch["action_encoding"] = np.zeros(
                 (len(example_batch), 1)
             )
             print("Warning: action_encodings not found in example_batch. Using zeros.")
 
-        init_args = (
-            example_batch["observation"],
-            example_batch["task"],
-            example_batch["observation"]["timestep_pad_mask"],
-            example_batch["action_encoding"],
-        )
+        if condition_on_action:
+            init_args = (
+                example_batch["observation"],
+                example_batch["task"],
+                example_batch["observation"]["timestep_pad_mask"],
+                example_batch["action_encoding"],
+            )
+        else:
+            init_args = (
+                example_batch["observation"],
+                example_batch["task"],
+                example_batch["observation"]["timestep_pad_mask"],
+            )
+
         params_shape = jax.eval_shape(
             partial(module.init, train=False), jax.random.PRNGKey(0), *init_args
         )["params"]
